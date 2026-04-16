@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Fix webpackbar compatibility
+        run: npm install webpackbar@5 --legacy-peer-deps
+
       - name: Build
         run: npm run build
 
