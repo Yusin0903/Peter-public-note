@@ -8,10 +8,10 @@ const config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://Yusin0903.github.io',
-  baseUrl: '/Peter_public_note/',
+  baseUrl: '/Peter-public-note/',
 
   organizationName: 'Yusin0903',
-  projectName: 'Peter_public_note',
+  projectName: 'Peter-public-note',
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
