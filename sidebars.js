@@ -29,9 +29,10 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Kubernetes',
+      label: 'Kubernetes & Docker',
       items: [
         'kubernetes/k8s-concepts',
+        'kubernetes/docker-tips',
       ],
     },
     {
@@ -43,6 +44,46 @@ const sidebars = {
         'monitoring/centralized-monitoring-proposal',
         'monitoring/cost-analysis-centralized-monitoring',
         'monitoring/decision-rejected-signoz',
+        'monitoring/prometheus-docker-compose',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Database',
+      items: [
+        'database/alembic',
+        'database/sqlalchemy-orm-cheatsheet',
+        'database/sqlite-to-postgresql',
+        'database/postgresql-notes',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Python',
+      items: [
+        'python/context-manager',
+        'python/singleton-pattern',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Keycloak',
+      items: [
+        'keycloak/keycloak-concepts',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Linux',
+      items: [
+        'linux/linux-permissions',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'FFmpeg',
+      items: [
+        'ffmpeg/compression',
       ],
     },
     {
