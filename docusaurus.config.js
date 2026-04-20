@@ -18,7 +18,19 @@ const config = {
 
   i18n: {
     defaultLocale: 'zh-TW',
-    locales: ['zh-TW'],
+    locales: ['zh-TW', 'en'],
+    localeConfigs: {
+      'zh-TW': {
+        label: '繁體中文',
+        direction: 'ltr',
+        htmlLang: 'zh-TW',
+      },
+      en: {
+        label: 'English',
+        direction: 'ltr',
+        htmlLang: 'en-US',
+      },
+    },
   },
 
   presets: [
@@ -45,6 +57,7 @@ const config = {
         title: "Peter's Tech Notes",
         items: [
           { type: 'docSidebar', sidebarId: 'tutorialSidebar', position: 'left', label: 'Notes' },
+          { type: 'localeDropdown', position: 'right' },
         ],
       },
       footer: {

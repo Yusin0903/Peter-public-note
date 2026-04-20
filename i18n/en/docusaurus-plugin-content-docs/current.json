@@ -1,0 +1,46 @@
+{
+  "version.label": {
+    "message": "Current",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.AWS": {
+    "message": "AWS",
+    "description": "The label for category AWS in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.JavaScript / TypeScript": {
+    "message": "JavaScript / TypeScript",
+    "description": "The label for category JavaScript in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Kubernetes & Docker": {
+    "message": "Kubernetes & Docker",
+    "description": "The label for category Kubernetes & Docker in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Monitoring": {
+    "message": "Monitoring",
+    "description": "The label for category Monitoring in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Database": {
+    "message": "Database",
+    "description": "The label for category Database in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Python": {
+    "message": "Python",
+    "description": "The label for category Python in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Keycloak": {
+    "message": "Keycloak",
+    "description": "The label for category Keycloak in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Linux": {
+    "message": "Linux",
+    "description": "The label for category Linux in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.FFmpeg": {
+    "message": "FFmpeg",
+    "description": "The label for category FFmpeg in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.MCP": {
+    "message": "MCP",
+    "description": "The label for category MCP in sidebar tutorialSidebar"
+  }
+}
