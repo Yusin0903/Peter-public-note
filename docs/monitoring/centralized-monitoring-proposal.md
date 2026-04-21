@@ -2,62 +2,62 @@
 sidebar_position: 3
 ---
 
-# Centralized Monitoring System - Technical Proposal
+# 集中式監控系統 — 技術提案
 
-> **Status:** Reference Architecture
-> **Use case:** Multi-region EKS deployments with independent Prometheus stacks
-
----
-
-## Table of Contents
-
-1. [Background & Problem Statement](#1-background--problem-statement)
-2. [Goals & Non-Goals](#2-goals--non-goals)
-3. [Current Architecture](#3-current-architecture)
-4. [Proposed Solutions](#4-proposed-solutions)
-5. [Detailed Comparison](#5-detailed-comparison)
-6. [Cost Estimation](#6-cost-estimation)
-7. [Migration Strategy](#7-migration-strategy)
-8. [Recommendation](#8-recommendation)
+> **狀態：** 參考架構
+> **使用情境：** 多 Region EKS 部署，各 Region 有獨立 Prometheus stack
 
 ---
 
-## 1. Background & Problem Statement
+## 目錄
 
-### Current Pain Points
-
-| Problem                               | Impact                                                             |
-| ------------------------------------- | ------------------------------------------------------------------ |
-| N regions = N separate Grafana URLs   | Engineers must switch between dashboards to get a full picture     |
-| No cross-region correlation           | Cannot compare metrics across regions in a single view             |
-| Duplicated dashboard maintenance      | Any dashboard change must be replicated manually per region        |
-| Inconsistent alerting                 | Alert rules may drift between regions                              |
-| Operational overhead                  | N independent Prometheus + Grafana stacks to maintain and upgrade  |
-| No global SLA view                    | Cannot easily aggregate uptime/error rates across all regions      |
-
-### Business Context
-
-- Service is deployed on **AWS EKS** across **multiple regions**
-- Each region runs an independent **Prometheus + Grafana** stack
-- Monitoring scope: **K8s cluster metrics + Application-specific custom metrics**
+1. [背景與問題描述](#1-背景與問題描述)
+2. [目標與範圍](#2-目標與範圍)
+3. [現有架構](#3-現有架構)
+4. [方案比較](#4-方案比較)
+5. [詳細比較](#5-詳細比較)
+6. [成本估算](#6-成本估算)
+7. [遷移策略](#7-遷移策略)
+8. [建議](#8-建議)
 
 ---
 
-## 2. Goals & Non-Goals
+## 1. 背景與問題描述
 
-### Goals
+### 目前的痛點
 
-- **Single pane of glass**: One Grafana URL to view all regions
-- **Cross-region query**: Ability to compare and correlate metrics across regions
-- **Unified alerting**: Centralized alert rules with region-aware routing
-- **Reduced operational burden**: Fewer monitoring stacks to maintain
-- **Dashboard consistency**: Single source of truth for dashboard definitions
+| 問題 | 影響 |
+| ---- | ---- |
+| N 個 Region = N 個獨立 Grafana URL | 工程師必須切換多個 dashboard 才能看到全貌 |
+| 無法跨 Region 關聯 | 無法在同一個畫面比較各 Region 的 metrics |
+| Dashboard 維護重複 | 任何 dashboard 修改都必須在每個 Region 手動同步 |
+| Alert 規則不一致 | 各 Region alert 規則可能逐漸偏離 |
+| 維運負擔 | N 套獨立的 Prometheus + Grafana 需要維護與升級 |
+| 無全局 SLA 視圖 | 難以彙整所有 Region 的 uptime / error rate |
 
-### Non-Goals
+### 情境描述
 
-- Replacing application-level logging (ELK/CloudWatch Logs)
-- Replacing distributed tracing (X-Ray/Jaeger)
-- Modifying the application's metric instrumentation code
+- 服務部署在 **AWS EKS** 的**多個 Region**
+- 每個 Region 各有一套獨立的 **Prometheus + Grafana**
+- 監控範圍：**K8s cluster metrics + 應用程式自訂 metrics**
+
+---
+
+## 2. 目標與範圍
+
+### 目標
+
+- **單一入口**：一個 Grafana URL 查看所有 Region
+- **跨 Region 查詢**：可以在同一個畫面比較與關聯各 Region 的 metrics
+- **統一 alert**：集中管理 alert 規則，支援 region-aware 路由
+- **降低維運負擔**：減少需要維護的監控 stack 數量
+- **Dashboard 一致性**：dashboard 定義的單一 source of truth
+
+### 不在範圍內
+
+- 替換應用程式層的 logging（ELK / CloudWatch Logs）
+- 替換分散式 tracing（X-Ray / Jaeger）
+- 修改應用程式的 metrics instrumentation 程式碼
 
 ---
 
@@ -84,11 +84,11 @@ sidebar_position: 3
 
 ---
 
-## 4. Proposed Solutions
+## 4. 方案比較
 
-### Option A: Prometheus Federation
+### 方案 A：Prometheus Federation
 
-**Concept:** Keep local Prometheus in each region. Deploy a central "Global Prometheus" that uses the `/federate` endpoint to pull aggregated metrics from each regional Prometheus.
+**概念：** 各 Region 保留本地 Prometheus，部署一個中央「Global Prometheus」透過 `/federate` endpoint 拉取各 Region 的 aggregated metrics。
 
 ```
 Region 1: Prometheus (local) ──┐
@@ -98,16 +98,14 @@ Region 3: Prometheus (local) ──┼──────────────
 Region N: Prometheus (local) ──┘
 ```
 
-**How it works:**
-- Central Prometheus scrapes each regional Prometheus via `federate` endpoint
-- Only selected/aggregated metrics are pulled (not raw data)
-- Central Grafana connects to Central Prometheus as its datasource
+- 中央 Prometheus 透過 `federate` endpoint scrape 各 Region Prometheus
+- 只拉取 selected/aggregated metrics，不是 raw data
 
 ---
 
-### Option B: Remote Write + Self-Hosted VictoriaMetrics
+### 方案 B：Remote Write + 自架 VictoriaMetrics
 
-**Concept:** Each regional Prometheus pushes all metrics via `remote_write` to a centrally deployed VictoriaMetrics cluster. Central Grafana queries VictoriaMetrics.
+**概念：** 各 Region Prometheus 透過 `remote_write` 將所有 metrics 推送到中央部署的 VictoriaMetrics cluster。
 
 ```
 Region 1: Prometheus ──remote_write──┐
@@ -117,16 +115,16 @@ Region 3: Prometheus ──remote_write──┼──▶ VictoriaMetrics ──
 Region N: Prometheus ──remote_write──┘
 ```
 
-**VictoriaMetrics Cluster Components:**
-- `vminsert` — accepts incoming remote_write data
-- `vmstorage` — persists time-series data on EBS
-- `vmselect` — handles PromQL queries from Grafana
+**VictoriaMetrics Cluster 元件：**
+- `vminsert` — 接收 remote_write 資料
+- `vmstorage` — 將 time-series 資料持久化到 EBS
+- `vmselect` — 處理來自 Grafana 的 PromQL 查詢
 
 ---
 
-### Option C: Remote Write + Self-Hosted Thanos
+### 方案 C：Remote Write + 自架 Thanos
 
-**Concept:** Each regional Prometheus runs a Thanos Sidecar. A central Thanos Query component fans out queries across all regions. Long-term storage uses S3.
+**概念：** 各 Region Prometheus 掛載 Thanos Sidecar，中央 Thanos Query 對所有 Region 做 fan-out 查詢，長期儲存使用 S3。
 
 ```
 Region 1: Prometheus + Thanos Sidecar ──┐
@@ -136,21 +134,21 @@ Region 3: Prometheus + Thanos Sidecar ──┼───────────
 Region N: Prometheus + Thanos Sidecar ──┘
                                               ▲
                                               │
-                                        Thanos Store ◀── S3 (long-term)
+                                        Thanos Store ◀── S3 (長期儲存)
                                         Thanos Compact
 ```
 
-**Thanos Components:**
-- `Sidecar` — runs alongside each regional Prometheus, uploads blocks to S3
-- `Query` — central component, fans out queries to all Sidecars and Store
-- `Store` — serves historical data from S3
-- `Compact` — downsamples and compacts data in S3
+**Thanos 元件：**
+- `Sidecar` — 掛在各 Region Prometheus 旁，上傳 blocks 到 S3
+- `Query` — 中央元件，向所有 Sidecar 和 Store fan-out 查詢
+- `Store` — 從 S3 提供歷史資料
+- `Compact` — 壓縮和降採樣 S3 資料
 
 ---
 
-### Option D: AWS Managed (AMP + AMG)
+### 方案 D：AWS 全託管（AMP + AMG）
 
-**Concept:** Use AWS-native managed services. Each regional Prometheus pushes metrics to Amazon Managed Prometheus (AMP) via `remote_write` with SigV4 authentication. Amazon Managed Grafana (AMG) provides the unified dashboard.
+**概念：** 使用 AWS 原生託管服務。各 Region Prometheus 透過 `remote_write` + SigV4 認證推送到 Amazon Managed Prometheus（AMP）。
 
 ```
 Region 1: Prometheus ──remote_write + SigV4──┐
@@ -160,103 +158,89 @@ Region 3: Prometheus ──remote_write + SigV4──┼──▶ AMP Workspace 
 Region N: Prometheus ──remote_write + SigV4──┘
 ```
 
-**AWS Components:**
-- **AMP (Amazon Managed Prometheus)** — fully managed, Cortex/Mimir-based TSDB
-- **AMG (Amazon Managed Grafana)** — fully managed Grafana with IAM/SSO integration
+- **AMP** — 全託管，基於 Cortex/Mimir 的 TSDB
+- **AMG** — 全託管 Grafana，原生整合 IAM/SSO
 
 ---
 
-## 5. Detailed Comparison
+## 5. 詳細比較
 
-### 5.1 Architecture & Design
+### 5.1 架構設計
 
-| Criteria | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
+| 評估項目 | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
 |----------|:---:|:---:|:---:|:---:|
-| Data flow direction | Pull (central pulls) | Push (regions push) | Hybrid (sidecar + pull) | Push (regions push) |
-| Full raw metrics at center | No (aggregated only) | Yes | Yes | Yes |
-| Local region autonomy | Full | Full | Full | Full |
-| Single point of failure | Central Prom | Central VM cluster | Thanos Query | AWS managed (HA built-in) |
-| Multi-tenancy support | Manual (relabeling) | Native | Limited | Native |
+| 資料流方向 | Pull（中央拉） | Push（Region 推） | Hybrid | Push（Region 推） |
+| 中央有完整 raw metrics | 否（僅 aggregated） | 是 | 是 | 是 |
+| 單點失敗 | 中央 Prom | 中央 VM cluster | Thanos Query | AWS 託管（內建 HA） |
+| 多租戶支援 | 手動（relabeling） | 原生支援 | 有限 | 原生支援 |
 
-### 5.2 Operational Complexity
+### 5.2 維運複雜度
 
-| Criteria | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
+| 評估項目 | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
 |----------|:---:|:---:|:---:|:---:|
-| Components to deploy (central) | 1 (Prometheus) | 3 (vminsert/select/storage) | 4+ (Query/Store/Compact/Sidecar) | 0 (managed) |
-| Components to modify (per region) | 0 | 0 (add remote_write config) | 1 (add Sidecar per Prom) | 0 (add remote_write config) |
-| Upgrade complexity | Low | Medium | High | None (AWS manages) |
-| Overall operational burden | **Low** | **Medium** | **High** | **Very Low** |
+| 中央需部署元件數 | 1 | 3 (vminsert/select/storage) | 4+ | 0（託管） |
+| 各 Region 需修改 | 無 | 無（加 remote_write config） | 需加 Sidecar | 無（加 remote_write config） |
+| 升級複雜度 | 低 | 中 | 高 | 無（AWS 負責） |
+| **整體維運負擔** | **低** | **中** | **高** | **極低** |
 
-### 5.3 Performance & Scalability
+### 5.3 效能與擴展性
 
-| Criteria | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
+| 評估項目 | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
 |----------|:---:|:---:|:---:|:---:|
-| Query latency | Low (local data) | Low (block storage) | Medium (fan-out + S3) | Low (managed infra) |
-| Data compression | 1x (Prometheus native) | 7-10x vs Prometheus | 2-4x (with downsampling) | N/A (managed) |
-| RAM efficiency | Baseline | 7-10x better than Prom | Similar to Prom | N/A (managed) |
-| Max retention | Limited by disk | Limited by EBS | Unlimited (S3) | 150 days default, max 1095 days |
-
-### 5.4 AWS Integration & Security
-
-| Criteria | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
-|----------|:---:|:---:|:---:|:---:|
-| IAM integration | None | None | None | Native (SigV4) |
-| SSO integration | Manual OIDC | Manual OIDC | Manual OIDC | Native (AWS IAM Identity Center) |
-| EKS IRSA support | N/A | N/A | N/A | Native |
+| 資料壓縮率 | 1x | 7-10x vs Prometheus | 2-4x | N/A（託管） |
+| 最大保留期 | 受限於磁碟 | 受限於 EBS | 無限（S3） | 預設 150 天，最長 1095 天 |
 
 ---
 
-## 6. Cost Estimation
+## 6. 成本估算
 
-### Assumptions
+### 假設條件
 
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| Number of regions | 10 (example) | Adjust based on your deployment |
-| Avg active time series per region | 50,000 | Verify with `prometheus_tsdb_head_series` |
-| Scrape interval | 30 seconds | Standard Prometheus default |
-| Monthly hours | 744 | 31-day month |
-| Data retention | 90 days | |
-| Dashboard editors | 5 | |
-| Dashboard viewers | 15 | |
+| 參數 | 值 | 說明 |
+|------|----|------|
+| Region 數量 | 10（範例） | 依實際部署調整 |
+| 每 Region 平均 active time series | 50,000 | 用 `prometheus_tsdb_head_series` 確認 |
+| Scrape interval | 30 秒 | Prometheus 標準預設 |
+| 每月時數 | 744 | 31 天 |
+| 資料保留期 | 90 天 | |
 
-### Derived Metrics
+### 推算數量
 
 ```
-Samples per region per month = 50,000 × (3600/30) × 744 = 4.464 billion
-Total samples across 10 regions = 44.64 billion samples/month
+每 Region 每月 samples = 50,000 × (3600/30) × 744 = 44.6 億
+10 個 Region 合計 = 446 億 samples/月
 ```
 
-> Run `count({__name__=~".+"})` on your Prometheus to get actual numbers.
+> 在自己的 Prometheus 執行 `count({__name__=~".+"})` 確認實際數字。
 
-### Cost Comparison Summary
+### 成本比較摘要
 
-| Option | Monthly Cost (est.) | Annual Cost | Ops Effort |
-|--------|:----------:|:----------:|:---:|
-| A: Federation | ~$220 | ~$2,640 | Low |
-| B: VictoriaMetrics | ~$610 | ~$7,320 | Medium |
-| C: Thanos | ~$442 | ~$5,304 | High |
-| D: AMP + AMG | ~$614 | ~$7,368 | Very Low |
+| 方案 | 每月估算 | 每年 | 維運負擔 |
+|------|:--------:|:----:|:-------:|
+| A: Federation | ~$220 | ~$2,640 | 低 |
+| B: VictoriaMetrics | ~$610 | ~$7,320 | 中 |
+| C: Thanos | ~$442 | ~$5,304 | 高 |
+| D: AMP + AMG | ~$614 | ~$7,368 | 極低 |
 
-> **Note:** These estimates assume 50K active series/region. If your actual numbers differ significantly, recalculate using the [AWS Pricing Calculator](https://calculator.aws).
+> 以上估算基於每 Region 50K active series，實際數字請用 [AWS Pricing Calculator](https://calculator.aws) 重新計算。
 
 ---
 
-## 7. Migration Strategy
+## 7. 遷移策略
 
-### Phase 1: Parallel Run (Week 1-2)
+### 第一階段：平行運行（第 1-2 週）
 
-1. Deploy the chosen central solution in one region
-2. Configure **one region** to `remote_write` to the central TSDB
-3. Keep existing local Prometheus + Grafana running (no disruption)
-4. Validate data consistency: compare local vs central metrics
+1. 在一個 Region 部署選定的中央方案
+2. 設定**一個 Region** 的 Prometheus `remote_write` 到中央 TSDB
+3. 保留既有本地 Prometheus + Grafana（不中斷服務）
+4. 驗證資料一致性：比較本地與中央的 metrics
 
-### Phase 2: Incremental Rollout (Week 3-4)
+### 第二階段：逐步推廣（第 3-4 週）
 
-1. Add remaining regions to `remote_write` one at a time
-2. Migrate dashboards to central Grafana
-3. Set up centralized alerting rules
-4. Add `external_labels` per region for differentiation:
+1. 逐一將其餘 Region 加入 `remote_write`
+2. 將 dashboard 遷移到中央 Grafana
+3. 設定集中式 alert 規則
+4. 為每個 Region 加上 `external_labels`：
    ```yaml
    global:
      external_labels:
@@ -265,64 +249,54 @@ Total samples across 10 regions = 44.64 billion samples/month
        environment: "production"
    ```
 
-### Phase 3: Validation & Cutover (Week 5-6)
+### 第三階段：驗證與切換（第 5-6 週）
 
-1. Run both systems in parallel for at least 1-2 weeks
-2. Validate all dashboards, alerts, and queries work correctly
-3. Redirect team to use central Grafana URL
-4. Decommission regional Grafana instances (keep local Prometheus)
+1. 兩套系統平行運行至少 1-2 週
+2. 確認所有 dashboard、alert、查詢都正常
+3. 將團隊導向使用中央 Grafana URL
+4. 下線各 Region Grafana（保留本地 Prometheus）
 
-### Rollback Plan
+### 回滾方案
 
-- Local Prometheus instances are never removed
-- If central solution fails, team simply switches back to regional Grafana URLs
-- No data loss risk since local Prometheus retains full data
+- 本地 Prometheus 永遠不刪除
+- 若中央方案出問題，直接切回各 Region 的 Grafana URL
+- 不會有資料遺失風險
 
 ---
 
-## 8. Recommendation
+## 8. 建議
 
-### Decision Matrix (Weighted Scoring)
+### 決策矩陣（加權評分）
 
-| Criteria (Weight) | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
+| 評估項目（權重） | A: Federation | B: VictoriaMetrics | C: Thanos | D: AMP + AMG |
 |---|:---:|:---:|:---:|:---:|
-| Operational simplicity (30%) | 8 | 6 | 4 | **10** |
-| Full data at center (20%) | 3 | **10** | **10** | **10** |
-| Cost efficiency (15%) | **10** | 6 | 7 | 6 |
-| AWS ecosystem fit (15%) | 3 | 4 | 5 | **10** |
-| Scalability (10%) | 3 | 9 | 8 | **10** |
-| Reliability / HA (10%) | 5 | 7 | 8 | **10** |
-| **Weighted Score** | **5.6** | **7.0** | **6.6** | **9.3** |
+| 維運簡單度（30%） | 8 | 6 | 4 | **10** |
+| 中央有完整資料（20%） | 3 | **10** | **10** | **10** |
+| 成本效益（15%） | **10** | 6 | 7 | 6 |
+| AWS 生態整合（15%） | 3 | 4 | 5 | **10** |
+| 擴展性（10%） | 3 | 9 | 8 | **10** |
+| 可靠性 / HA（10%） | 5 | 7 | 8 | **10** |
+| **加權總分** | **5.6** | **7.0** | **6.6** | **9.3** |
 
-### Primary Recommendation: Option D — AMP + AMG
+### 主要建議：方案 D — AMP + AMG
 
-**Rationale:**
+1. **零維運負擔**：AWS 全管 HA、擴展、升級、安全修補。
+2. **AWS 原生整合**：SigV4、IAM/IRSA、VPC PrivateLink、SSO。
+3. **規模驗證**：AMP 基於 Cortex/Mimir。
+4. **最快上線**：每個 Region 只需加一段 `remote_write` config。
 
-1. **Zero operational overhead**: AWS fully manages HA, scaling, upgrades, and patching.
-2. **Native AWS integration**: SigV4 authentication, IAM roles (IRSA for EKS pods), VPC PrivateLink, SSO.
-3. **Proven at scale**: AMP is built on Cortex/Mimir, the same technology used by Grafana Cloud.
-4. **Fastest time-to-value**: Each region only needs a `remote_write` configuration change.
-5. **Risk mitigation**: AWS SLA of 99.9%, built-in multi-AZ redundancy.
+### 備選方案：方案 B — VictoriaMetrics
 
-### Fallback Recommendation: Option B — VictoriaMetrics
-
-**When to consider instead of AMP:**
-- If actual active time series per region exceeds 200K (AMP becomes significantly more expensive)
-- If data retention requirement exceeds AMP's maximum of 1095 days
-- If the team prefers full control over the monitoring backend
-
-### Not Recommended
-
-| Option | Reason |
-|--------|--------|
-| A: Federation | Only pulls aggregated metrics; cannot do full cross-region analysis. |
-| C: Thanos | Highest operational complexity. Requires managing 4+ components. |
+適合改選的情況：
+- 每 Region active time series 超過 200K（AMP 費用暴增）
+- 資料保留需求超過 AMP 上限 1095 天
+- 團隊希望完全掌控監控後端
 
 ---
 
-## References
+## 參考資料
 
-- [Amazon Managed Service for Prometheus — Pricing](https://aws.amazon.com/prometheus/pricing/)
-- [Amazon Managed Grafana — Pricing](https://aws.amazon.com/grafana/pricing/)
-- [VictoriaMetrics — Cluster Version Docs](https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/)
-- [Thanos vs VictoriaMetrics Comparison (Last9)](https://last9.io/blog/thanos-vs-victoriametrics/)
+- [Amazon Managed Prometheus — 定價](https://aws.amazon.com/prometheus/pricing/)
+- [Amazon Managed Grafana — 定價](https://aws.amazon.com/grafana/pricing/)
+- [VictoriaMetrics — Cluster 文件](https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/)
+- [Thanos vs VictoriaMetrics 比較（Last9）](https://last9.io/blog/thanos-vs-victoriametrics/)

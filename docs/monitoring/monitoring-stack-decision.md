@@ -2,204 +2,204 @@
 sidebar_position: 7
 ---
 
-# Centralized Multi-Region Monitoring — Stack Decision
+# 集中式多 Region 監控 — 技術選型決策
 
-> **Context:** 10 AWS regions, each with independent Prometheus + Grafana.
-> Goal: one central TSDB + one Grafana URL for all regions.
-> **Decision: VictoriaMetrics (self-hosted)**
-
----
-
-## The Problem
-
-When you run the same service across 10 regions, each with its own Prometheus + Grafana:
-
-- Engineers must check 10 separate URLs to get a cross-region picture
-- No alerting — each region is siloed
-- Dashboard changes must be replicated 10 times manually
-- No global view of error rates, queue depths, or pod health
+> **情境：** 多個 AWS Region，各有獨立 Prometheus + Grafana。
+> 目標：一個中央 TSDB + 一個 Grafana URL 查看所有 Region。
+> **決策：VictoriaMetrics（自架）**
 
 ---
 
-## Options Evaluated
+## 問題描述
 
-| Option | Monthly Cost | Ops Burden | Verdict |
-|--------|:-----------:|:----------:|:-------:|
-| A: Prometheus Federation | ~$215 | Low | ❌ Aggregated metrics only |
-| B: VictoriaMetrics | ~$555-575 | Medium | ✅ Selected |
-| C: Thanos | ~$427 | High | ❌ Too complex |
-| D: AMP + AMG (AWS managed) | ~$8,460 | Very Low | ❌ Cost 14-17x |
-| E: SigNoz | ~$475+ | High | ❌ No multi-region support |
+當你在多個 Region 部署同一套服務，每個 Region 各有自己的 Prometheus + Grafana：
 
-> Cross-region transfer via Transit Gateway (AWS internal) — not public internet.
+- 工程師必須查看多個不同 URL 才能得到跨 Region 全貌
+- 沒有統一 alerting — 各 Region 各自孤立
+- Dashboard 修改必須手動同步到每個 Region
+- 無法有全局的 error rate、queue depth、pod health 視圖
 
 ---
 
-## Critical: Measure Your Active Series Before Deciding
+## 評估方案
 
-The most common mistake is estimating costs based on assumed series counts.
+| 方案 | 每月成本 | 維運負擔 | 結論 |
+|------|:-------:|:-------:|:----:|
+| A: Prometheus Federation | ~$215 | 低 | ❌ 只有 aggregated metrics |
+| B: VictoriaMetrics | ~$555-575 | 中 | ✅ 選用 |
+| C: Thanos | ~$427 | 高 | ❌ 過於複雜 |
+| D: AMP + AMG（AWS 託管） | ~$8,460 | 極低 | ❌ 成本 14-17 倍 |
+| E: SigNoz | ~$475+ | 高 | ❌ 無多 Region 支援 |
 
-**Original assumption:** 50,000 active series/region → AMP looked affordable (~$614/month)
+> 跨 Region 傳輸走 Transit Gateway（AWS 內網），非公開網路。
 
-**Reality after measurement:** avg ~613,000 series/region → AMP costs ~$8,460/month
+---
 
-Run this on each Prometheus before finalizing your stack choice:
+## 重要：決定前先量你的 Active Series
+
+最常見的錯誤是用估算值來估成本。
+
+**原始假設：** 每 Region 50,000 active series → AMP 看起來可接受（~$614/月）
+
+**實際量測後：** 平均每 Region ~613,000 series → AMP 要 ~$8,460/月
+
+在決定技術選型前，先對每個 Prometheus 執行：
 ```promql
 avg_over_time(prometheus_tsdb_head_series[7d])
 ```
 
-And ingestion rate:
+以及攝取速率：
 ```promql
 sum(rate(prometheus_tsdb_head_samples_appended_total[7d]))
 ```
 
-**The numbers will surprise you.**
+**數字往往會讓你嚇一跳。**
 
 ---
 
-## Option A: Prometheus Federation — ❌
+## 方案 A：Prometheus Federation — ❌
 
-**How it works:**
+**運作方式：**
 ```
 Central Prometheus  ──/federate──▶  Region 1 Prometheus
                     ──/federate──▶  Region 2 Prometheus
                     ...
 ```
 
-**Cost breakdown:**
+**成本明細：**
 
-| Item | Spec | Monthly |
-|------|------|:-------:|
-| Central Prometheus (EC2) | m5.xlarge | ~$140 |
-| EBS storage (gp3) | 500GB | ~$40 |
-| Central Grafana (EC2) | t3.medium | ~$30 |
-| Cross-region transfer | Minimal (aggregated) | ~$5 |
-| **Total** | | **~$215** |
+| 項目 | 規格 | 每月 |
+|------|------|:----:|
+| 中央 Prometheus（EC2） | m5.xlarge | ~$140 |
+| EBS 儲存（gp3） | 500GB | ~$40 |
+| 中央 Grafana（EC2） | t3.medium | ~$30 |
+| 跨 Region 傳輸 | 極少（aggregated） | ~$5 |
+| **合計** | | **~$215** |
 
-**Why not:**
-- Only pulls **aggregated** metrics — raw time series stay in each region
-- Cannot do cross-region queries on raw data (e.g., "show pod restarts across all regions in one panel")
-- Cheapest option, but the capability gap makes it a dead end
+**不選的原因：**
+- 只拉取 **aggregated** metrics — raw time series 留在各 Region
+- 無法對 raw data 做跨 Region 查詢（例如「在同一個 panel 顯示所有 Region 的 pod restarts」）
+- 最便宜，但能力缺口讓它成為死路
 
 ---
 
-## Option C: Thanos — ❌
+## 方案 C：Thanos — ❌
 
-**Two modes — both problematic:**
+**兩種模式都有問題：**
 
-### Sidecar mode (official)
+### Sidecar 模式（官方）
 ```
-Each region EKS pod:
-  ├── container: prometheus     ← existing
-  └── container: thanos-sidecar ← must add to EVERY region manifest
+每個 Region EKS pod：
+  ├── container: prometheus     ← 既有的
+  └── container: thanos-sidecar ← 每個 Region manifest 都要加
 
-Central:
+中央：
   ├── Thanos Query
   ├── Thanos Store Gateway
   ├── Thanos Compactor
-  └── S3 (long-term storage, required)
+  └── S3（長期儲存，必要）
 ```
 
-### Receive mode (newer, less proven)
+### Receive 模式（較新，較不成熟）
 ```
-Each region: Prometheus ──remote_write──▶ Thanos Receive
-Central: Query + Store + Compactor + S3
+每個 Region：Prometheus ──remote_write──▶ Thanos Receive
+中央：Query + Store + Compactor + S3
 ```
 
-**Cost breakdown:**
+**成本明細：**
 
-| Item | Spec | Monthly |
-|------|------|:-------:|
-| Thanos Query (EC2) | 2× m5.large (HA) | ~$140 |
-| Thanos Store Gateway (EC2) | 2× m5.large | ~$140 |
-| Thanos Compactor (EC2) | 1× m5.large | ~$70 |
-| S3 storage | ~500GB compressed | ~$12 |
-| S3 API requests | PUT/GET for blocks | ~$20 |
-| Thanos Sidecar | Shared with Prometheus pod | ~$0 |
-| Central Grafana (EC2) | t3.medium | ~$30 |
-| Cross-region transfer | Via Transit Gateway | ~$15 |
-| **Total** | | **~$427** |
+| 項目 | 規格 | 每月 |
+|------|------|:----:|
+| Thanos Query（EC2） | 2× m5.large（HA） | ~$140 |
+| Thanos Store Gateway（EC2） | 2× m5.large | ~$140 |
+| Thanos Compactor（EC2） | 1× m5.large | ~$70 |
+| S3 儲存 | ~500GB 壓縮後 | ~$12 |
+| S3 API 請求 | PUT/GET blocks | ~$20 |
+| Thanos Sidecar | 與 Prometheus pod 共用 | ~$0 |
+| 中央 Grafana（EC2） | t3.medium | ~$30 |
+| 跨 Region 傳輸 | 走 Transit Gateway | ~$15 |
+| **合計** | | **~$427** |
 
-**Why not:**
-- **Sidecar mode:** requires adding a container to every region's Kubernetes manifest — 10 regions = 10 manifest changes + rollouts. High migration risk.
-- **Receive mode:** newer pattern, fewer production case studies, was previously "experimental"
-- **5 components** (Query, Store, Compactor, Sidecar/Receive, Query Frontend) vs 3 for VictoriaMetrics
-- **S3 required** — extra managed service to configure and monitor
-- **Cost savings marginal:** ~$427 vs ~$555 — saves ~$128/month but adds significant operational complexity
+**不選的原因：**
+- **Sidecar 模式：** 每個 Region 的 Kubernetes manifest 都需要新增 container — 多個 Region 意味著多次 manifest 修改 + rollout，遷移風險高
+- **Receive 模式：** 較新的模式，生產案例較少
+- **5 個元件**（Query、Store、Compactor、Sidecar/Receive、Query Frontend）vs VictoriaMetrics 的 3 個
+- **需要 S3** — 額外的託管服務需要設定和監控
+- **成本節省幅度有限：** ~$427 vs ~$555 — 每月省約 $128，但增加大量維運複雜度
 
 ---
 
-## Option D: AMP + AMG — ❌
+## 方案 D：AMP + AMG — ❌
 
-**How it works:**
+**運作方式：**
 ```
-Each region: Prometheus ──remote_write + SigV4──▶ AMP Workspace ──▶ AMG
+每個 Region：Prometheus ──remote_write + SigV4──▶ AMP Workspace ──▶ AMG
 ```
 
-Zero infrastructure to manage — AWS handles everything.
+零基礎設施管理 — AWS 全包。
 
-**Cost breakdown (at ~75,000 samples/sec):**
+**成本明細（在 ~75,000 samples/sec 下）：**
 
-| Item | Calculation | Monthly |
-|------|------------|:-------:|
-| AMP ingestion Tier 1 (first 2B) | 2B × $0.90/10M | ~$180 |
-| AMP ingestion Tier 2 (next 18B) | 18B × $0.72/10M | ~$1,296 |
-| AMP ingestion Tier 3 (~174B remaining) | 174B × $0.54/10M | ~$9,396 |
-| AMP storage | ~200GB × $0.03/GB | ~$6 |
-| AMG editors | 5 × $9 | ~$45 |
-| AMG viewers | 15 × $5 | ~$75 |
-| Cross-region transfer | No DT-IN charge | ~$0 |
-| **Total** | | **~$8,460** |
+| 項目 | 計算 | 每月 |
+|------|------|:----:|
+| AMP 攝取 Tier 1（前 20 億） | 20億 × $0.90/1000萬 | ~$180 |
+| AMP 攝取 Tier 2（後 180 億） | 180億 × $0.72/1000萬 | ~$1,296 |
+| AMP 攝取 Tier 3（剩餘 ~1,740 億） | 1740億 × $0.54/1000萬 | ~$9,396 |
+| AMP 儲存 | ~200GB × $0.03/GB | ~$6 |
+| AMG 編輯者 | 5 × $9 | ~$45 |
+| AMG 檢視者 | 15 × $5 | ~$75 |
+| 跨 Region 傳輸 | AMP DT-IN 免費 | ~$0 |
+| **合計** | | **~$8,460** |
 
-**Cost at different scales:**
+**不同規模下的成本：**
 
-| Scale | AMP + AMG | VictoriaMetrics | Difference |
-|-------|:---------:|:---------------:|:----------:|
-| Current (~75K samples/sec) | ~$8,460/month | ~$555/month | **15x** |
-| After cardinality cleanup (~57K) | ~$7,136/month | ~$555/month | **13x** |
-| Aggressive cleanup (100K series/region) | ~$2,616/month | ~$555/month | **5x** |
+| 規模 | AMP + AMG | VictoriaMetrics | 差距 |
+|------|:---------:|:---------------:|:----:|
+| 目前（~75K samples/sec） | ~$8,460/月 | ~$555/月 | **15 倍** |
+| 降低基數後（~57K） | ~$7,136/月 | ~$555/月 | **13 倍** |
+| 積極清理（每 Region 100K series） | ~$2,616/月 | ~$555/月 | **5 倍** |
 
-**Why not:**
-- AMP charges **per ingested sample** — cost grows linearly with series count
-- VictoriaMetrics charges for **EC2 size** — cost stays flat regardless of sample volume
-- At avg ~613K series/region (real measured), AMP is 15x more expensive
-- Even aggressive cardinality cleanup keeps us above the cost-effective range for AMP
+**不選的原因：**
+- AMP **按攝取 sample 數收費** — 費用隨 series 數量線性增長
+- VictoriaMetrics **按 EC2 規格收費** — 費用固定，不受 sample 量影響
+- 實際量測每 Region 平均 ~613K series，AMP 貴 15 倍
+- 即使積極降低基數，仍在 AMP 划算範圍之外
 
-**When AMP makes sense:** fewer than 100K active series/region, or if AWS introduces per-series pricing.
+**AMP 適合的情況：** 每 Region active series 少於 100K，或 AWS 推出按 series 計費方案。
 
 ---
 
-## Option E: SigNoz — ❌
+## 方案 E：SigNoz — ❌
 
-**How it works:**
+**運作方式：**
 ```
-Each region: OTel Collector ──OTLP──▶ Central SigNoz (ClickHouse) ──▶ Built-in UI
+每個 Region：OTel Collector ──OTLP──▶ Central SigNoz（ClickHouse）──▶ Built-in UI
 ```
 
-**Cost breakdown:**
+**成本明細：**
 
-| Item | Spec | Monthly |
-|------|------|:-------:|
-| ClickHouse nodes (EC2) | 3× r5.xlarge (32GB RAM) | ~$330 |
-| EBS storage (gp3) | 3× 500GB | ~$120 |
-| OTel Collector (per region) | Runs in existing pod | ~$0 |
-| Cross-region transfer | Via Transit Gateway | ~$25 |
-| **Total** | | **~$475+** |
+| 項目 | 規格 | 每月 |
+|------|------|:----:|
+| ClickHouse 節點（EC2） | 3× r5.xlarge（32GB RAM） | ~$330 |
+| EBS 儲存（gp3） | 3× 500GB | ~$120 |
+| OTel Collector（per region） | 跑在既有 pod 內 | ~$0 |
+| 跨 Region 傳輸 | 走 Transit Gateway | ~$25 |
+| **合計** | | **~$475+** |
 
-**Why not:**
-- **No mature multi-region federation** — official docs only cover single-region; no proven self-hosted multi-region pattern
-- **ClickHouse complexity:** CPU spikes with multiple dashboards open (reported 80%+), diagnostic logs grow to 70GB+, Zookeeper/Keeper dependency, AVX2 CPU requirement
-- **Community edition limits:** dashboard count limits, no SSO, no multi-tenancy
-- **Scope mismatch:** SigNoz's value is unified metrics+traces+logs; if you only need metrics, you're paying ClickHouse complexity cost without the benefit
+**不選的原因：**
+- **沒有成熟的多 Region federation** — 官方文件只涵蓋單 Region；無成熟的自架多 Region 模式
+- **ClickHouse 複雜度：** 多個 dashboard 同時開啟時 CPU 飆升（報告顯示 80%+）、診斷 log 長到 70GB+、Zookeeper/Keeper 依賴、AVX2 CPU 需求
+- **社群版限制：** dashboard 數量上限、無 SSO、無多租戶
+- **需求不匹配：** SigNoz 的價值在於 metrics+traces+logs 統一；若只需要 metrics，付出 ClickHouse 複雜度卻沒有發揮其優勢
 
 ---
 
-## Option B: VictoriaMetrics — ✅ Selected
+## 方案 B：VictoriaMetrics — ✅ 選用
 
-**How it works:**
+**運作方式：**
 ```
-Each region (only change: add remote_write to prometheus.yml):
-  Prometheus ──remote_write──▶ vmauth (TLS + bearer token)
+每個 Region（唯一修改：在 prometheus.yml 加上 remote_write）：
+  Prometheus ──remote_write──▶ vmauth（TLS + bearer token）
                                     │
                                vminsert ×2
                                     │
@@ -210,58 +210,58 @@ Each region (only change: add remote_write to prometheus.yml):
                            Central Grafana
 ```
 
-**Cost breakdown:**
+**成本明細：**
 
-| Item | Spec | Monthly |
-|------|------|:-------:|
-| vminsert (EC2) | 2× c5.large (HA) | ~$125 |
-| vmselect (EC2) | 2× m5.large (HA) | ~$140 |
-| vmstorage (EC2) | 3× r5.large (replicationFactor=2) | ~$277 |
-| EBS storage (gp3) | 3× 500GB (90-day retention) | ~$120 |
-| Central Grafana | Runs in existing EKS | ~$0 |
-| Cross-region transfer | Via Transit Gateway | ~$25 |
-| **Total** | | **~$555-575** |
+| 項目 | 規格 | 每月 |
+|------|------|:----:|
+| vminsert（EC2） | 2× c5.large（HA） | ~$125 |
+| vmselect（EC2） | 2× m5.large（HA） | ~$140 |
+| vmstorage（EC2） | 3× r5.large（replicationFactor=2） | ~$277 |
+| EBS 儲存（gp3） | 3× 500GB（90 天保留） | ~$120 |
+| 中央 Grafana | 跑在既有 EKS | ~$0 |
+| 跨 Region 傳輸 | 走 Transit Gateway | ~$25 |
+| **合計** | | **~$555-575** |
 
-**Key advantages:**
+**關鍵優勢：**
 
-| Factor | Detail |
-|--------|--------|
-| Lowest migration risk | Only change per region = 3 lines in `prometheus.yml`. No manifest changes, no pod restarts. |
-| Cost is fixed | Driven by EC2 size, not sample volume. Cost stays flat as metrics grow. |
-| RAM efficiency | 7-10x less RAM than Prometheus at same cardinality. Critical for high-cardinality regions. |
-| 3 components only | vminsert, vmselect, vmstorage — vs 5 for Thanos |
-| No external deps | No S3, no Zookeeper |
-| Built-in cardinality explorer | VMUI cardinality explorer helps investigate and fix series explosions |
-| 100% PromQL compatible | Existing queries and alert rules work without modification |
+| 面向 | 說明 |
+|------|------|
+| 遷移風險最低 | 每個 Region 只需在 `prometheus.yml` 加 3 行。無 manifest 修改，無 pod 重啟。 |
+| 成本固定 | 由 EC2 規格決定，不受 sample 量影響。metrics 增長費用不變。 |
+| RAM 效率 | 相同基數下比 Prometheus 節省 7-10 倍 RAM。對高基數 Region 至關重要。 |
+| 只有 3 個元件 | vminsert、vmselect、vmstorage — 比 Thanos 的 5 個少 |
+| 無外部依賴 | 不需要 S3、不需要 Zookeeper |
+| 內建基數探索器 | VMUI cardinality explorer 幫助調查和修復 series 爆炸 |
+| 100% PromQL 相容 | 既有查詢和 alert 規則無需修改 |
 
-**Component sizing (pre-production estimate, recalibrate after 1 day real load):**
+**元件規格（預生產估算，上線後第 1 天依實際負載校正）：**
 
-| Component | Replicas | CPU | RAM | Storage |
-|-----------|:--------:|-----|-----|---------|
-| vminsert | 2 (HA) | 1-2 vCPU | 1-2Gi | — |
-| vmstorage | 3 (replicationFactor=2) | 2-4 vCPU | 8-16Gi | 500Gi gp3 |
-| vmselect | 2 (HA) | 2-4 vCPU | 4-8Gi | — |
-| vmauth | 2 (HA) | 0.5 vCPU | 256Mi | — |
-
----
-
-## Migration Strategy (Zero Disruption)
-
-```
-Step 1: Deploy VictoriaMetrics + central Grafana in one region (INT/staging)
-Step 2: Add remote_write to ONE region's Prometheus
-Step 3: Validate data + dashboards
-Step 4: Roll out to remaining regions one by one
-Step 5: Keep existing per-region Grafana as rollback — never delete Prometheus
-```
-
-Rollback is always available: point engineers back to the regional Grafana URL.
+| 元件 | 副本數 | CPU | RAM | 儲存 |
+|------|:------:|-----|-----|------|
+| vminsert | 2（HA） | 1-2 vCPU | 1-2Gi | — |
+| vmstorage | 3（replicationFactor=2） | 2-4 vCPU | 8-16Gi | 500Gi gp3 |
+| vmselect | 2（HA） | 2-4 vCPU | 4-8Gi | — |
+| vmauth | 2（HA） | 0.5 vCPU | 256Mi | — |
 
 ---
 
-## Lessons Learned
+## 遷移策略（零中斷）
 
-1. **Measure before estimating** — assumed 50K series/region, reality was 613K average. Cost estimates were wrong by 12x.
-2. **Managed services hide costs** — AMP's zero-ops story is compelling, but per-sample billing at scale is brutal.
-3. **Migration strategy constrains tech choice** — Thanos Sidecar is a fine architecture, but if you want zero-disruption migration (just add remote_write), VictoriaMetrics is the natural fit.
-4. **Transfer costs are secondary** — at $25-50/month, cross-region transfer is noise compared to compute costs. Don't over-optimize for it.
+```
+步驟 1：在一個 Region（INT/staging）部署 VictoriaMetrics + 中央 Grafana
+步驟 2：在一個 Region 的 Prometheus 加上 remote_write
+步驟 3：驗證資料 + dashboard
+步驟 4：逐一推廣到其餘 Region
+步驟 5：保留各 Region Grafana 作為回滾選項 — 永遠不刪除 Prometheus
+```
+
+回滾隨時可用：讓工程師切回各 Region 的 Grafana URL 即可。
+
+---
+
+## 經驗教訓
+
+1. **先量再估算** — 原本假設每 Region 50K series，實際是平均 613K。成本估算偏差 12 倍。
+2. **託管服務隱藏成本** — AMP 的零維運故事很吸引人，但按 sample 計費在大規模下相當昂貴。
+3. **遷移策略制約技術選型** — Thanos Sidecar 是不錯的架構，但若想要零中斷遷移（只加 remote_write），VictoriaMetrics 是自然的選擇。
+4. **傳輸成本是次要的** — 每月 $25-50 的跨 Region 傳輸費用，跟 compute 成本相比是雜音。不要過度優化。

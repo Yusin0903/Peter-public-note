@@ -2,206 +2,206 @@
 sidebar_position: 4
 ---
 
-# Cost Analysis: Centralized Monitoring System
+# 集中式監控系統 — 成本分析
 
-> **Status:** Reference Analysis
-> **Related:** [Technical Proposal](./centralized-monitoring-proposal)
-
----
-
-## Executive Summary
-
-Evaluating 4 solutions to centralize monitoring from N separate regional Prometheus + Grafana stacks into a single unified dashboard.
-
-| Option                           | Monthly Cost | Annual Cost |  Ops Effort  |            Recommendation            |
-| -------------------------------- | :----------: | :---------: | :----------: | :----------------------------------: |
-| A: Prometheus Federation         |    ~$220     |   ~$2,640   |     Low      | Not recommended (limited capability) |
-| B: VictoriaMetrics (self-hosted) |    ~$610     |   ~$7,320   |    Medium    |           Fallback option            |
-| C: Thanos (self-hosted)          |    ~$442     |   ~$5,304   |     High     |     Not recommended (complexity)     |
-| **D: AMP + AMG (AWS managed)**   |  **~$614**   | **~$7,368** | **Very Low** |           **Recommended**            |
-
-**Bottom line:** Option D (AWS managed) costs roughly the same as self-hosted VictoriaMetrics (~$614 vs ~$610/month), but eliminates all infrastructure maintenance overhead. The hidden cost of self-hosted solutions is the engineering time spent on operations, upgrades, and on-call — which is not reflected in the dollar amounts.
-
-> These estimates assume **10 regions × 50K active series/region × 30s scrape interval**.
-> Adjust using the [AWS Pricing Calculator](https://calculator.aws) for your actual numbers.
+> **狀態：** 參考分析
+> **相關文件：** [技術提案](./centralized-monitoring-proposal)
 
 ---
 
-## 1. Baseline Assumptions
+## 摘要
 
-> Run `count({__name__=~".+"})` on any regional Prometheus to verify your actual numbers.
+評估 4 種方案，將 N 個獨立 Region 的 Prometheus + Grafana 集中到單一統一 dashboard。
 
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| Number of regions | 10 | Example value |
-| Active time series per region | 50,000 | Conservative estimate (K8s + app metrics) |
-| Scrape interval | 30 seconds | Standard Prometheus default |
-| Monthly hours | 744 | 31-day month |
-| Data retention | 90 days | |
-| Dashboard editors | 5 | Engineers who create/edit dashboards |
-| Dashboard viewers | 15 | Engineers with read-only access |
+| 方案 | 每月成本 | 每年成本 | 維運負擔 | 建議 |
+| ---- | :------: | :------: | :------: | ---- |
+| A: Prometheus Federation | ~$220 | ~$2,640 | 低 | 不建議（能力有限） |
+| B: VictoriaMetrics（自架） | ~$610 | ~$7,320 | 中 | 備選方案 |
+| C: Thanos（自架） | ~$442 | ~$5,304 | 高 | 不建議（複雜度高） |
+| **D: AMP + AMG（AWS 託管）** | **~$614** | **~$7,368** | **極低** | **建議** |
 
-### Derived Ingestion Volume
+**結論：** 方案 D（AWS 託管）成本與自架 VictoriaMetrics 幾乎相同（~$614 vs ~$610/月），但免去所有基礎設施維護負擔。自架方案的隱藏成本是工程師花在維運、升級、on-call 的時間，這部分不反映在金額上。
+
+> 以上估算基於 **10 Regions × 每 Region 50K active series × 30s scrape interval**。
+> 實際數字請用 [AWS Pricing Calculator](https://calculator.aws) 重新計算。
+
+---
+
+## 1. 基準假設
+
+> 在任一 Region 的 Prometheus 執行 `count({__name__=~".+"})` 確認實際數字。
+
+| 參數 | 值 | 說明 |
+|------|----|------|
+| Region 數量 | 10 | 範例值 |
+| 每 Region Active time series | 50,000 | 保守估計（K8s + app metrics） |
+| Scrape interval | 30 秒 | Prometheus 標準預設 |
+| 每月時數 | 744 | 31 天 |
+| 資料保留期 | 90 天 | |
+| Dashboard 編輯者 | 5 人 | 建立/編輯 dashboard 的工程師 |
+| Dashboard 檢視者 | 15 人 | 唯讀權限的工程師 |
+
+### 推算攝取量
 
 ```
-Samples per region per month:
-  = 50,000 series × 120 scrapes/hour × 744 hours/month
-  = 4.464 billion samples/region/month
+每 Region 每月 samples：
+  = 50,000 series × 120 scrapes/hr × 744 hr/月
+  = 44.6 億 samples/Region/月
 
-Total across 10 regions:
-  = 44.64 billion samples/month
+10 個 Region 合計：
+  = 446 億 samples/月
 ```
 
 ---
 
-## 2. Option-by-Option Cost Breakdown
+## 2. 各方案成本明細
 
-### Option A: Prometheus Federation — $220/month
+### 方案 A：Prometheus Federation — $220/月
 
-| Item | Spec | Monthly (USD) |
-|------|------|:---:|
-| Central Prometheus (EC2) | m5.xlarge (4 vCPU, 16 GB) | $140 |
-| EBS storage (gp3) | 500 GB | $40 |
-| Central Grafana (EC2) | t3.medium | $30 |
-| Cross-region data transfer | Minimal (aggregated only) | $10 |
-| **Total** | | **$220** |
+| 項目 | 規格 | 每月（USD） |
+|------|------|:-----------:|
+| 中央 Prometheus（EC2） | m5.xlarge（4 vCPU, 16 GB） | $140 |
+| EBS 儲存（gp3） | 500 GB | $40 |
+| 中央 Grafana（EC2） | t3.medium | $30 |
+| 跨 Region 資料傳輸 | 極少（aggregated only） | $10 |
+| **合計** | | **$220** |
 
-**Why cheapest:** Only pulls aggregated metrics, not raw data.
-**Trade-off:** Cannot do full cross-region analysis on raw metrics.
-
----
-
-### Option B: VictoriaMetrics (self-hosted) — $610/month
-
-| Item | Spec | Monthly (USD) |
-|------|------|:---:|
-| vminsert (EC2) | 2x c5.large (HA) | $125 |
-| vmselect (EC2) | 2x m5.large (HA) | $140 |
-| vmstorage (EC2) | 2x r5.large (16 GB RAM, HA) | $185 |
-| EBS storage (gp3) | 2x 500 GB (HA, 90-day retention) | $80 |
-| Central Grafana (EC2/EKS) | t3.medium | $30 |
-| Cross-region data transfer | remote_write ~89 GB/month | $50 |
-| **Total** | | **$610** |
-
-**Hidden costs not included:**
-- Engineering time: ~2-4 hours/month for upgrades, monitoring, troubleshooting
-- On-call coverage for VictoriaMetrics cluster issues
-- Capacity planning as metrics volume grows
+**最便宜的原因：** 只拉取 aggregated metrics，不是 raw data。
+**代價：** 無法對 raw metrics 做完整的跨 Region 分析。
 
 ---
 
-### Option C: Thanos (self-hosted) — $442/month
+### 方案 B：VictoriaMetrics（自架）— $610/月
 
-| Item | Spec | Monthly (USD) |
-|------|------|:---:|
-| Thanos Query (EC2) | 2x m5.large (HA) | $140 |
-| Thanos Store Gateway (EC2) | 2x m5.large | $140 |
-| Thanos Compactor (EC2) | 1x m5.large | $70 |
-| S3 storage | ~500 GB compressed (90 days) | $12 |
-| S3 API requests | PUT/GET for blocks | $20 |
-| Thanos Sidecar (per region) | Shared with Prometheus pod | $0 |
-| Central Grafana (EC2/EKS) | t3.medium | $30 |
-| Cross-region data transfer | gRPC query fan-out | $30 |
-| **Total** | | **$442** |
+| 項目 | 規格 | 每月（USD） |
+|------|------|:-----------:|
+| vminsert（EC2） | 2× c5.large（HA） | $125 |
+| vmselect（EC2） | 2× m5.large（HA） | $140 |
+| vmstorage（EC2） | 2× r5.large（16 GB RAM, HA） | $185 |
+| EBS 儲存（gp3） | 2× 500 GB（HA, 90 天保留） | $80 |
+| 中央 Grafana（EC2/EKS） | t3.medium | $30 |
+| 跨 Region 資料傳輸 | remote_write ~89 GB/月 | $50 |
+| **合計** | | **$610** |
 
-**Hidden costs not included:**
-- Engineering time: ~4-8 hours/month (4+ components to manage)
-- Steep learning curve for Thanos architecture
+**未計入的隱藏成本：**
+- 工程師時間：每月約 2-4 小時（升級、監控、除錯）
+- VictoriaMetrics cluster 問題的 on-call 覆蓋
+- 隨 metrics 量成長的容量規劃
 
 ---
 
-### Option D: AMP + AMG (AWS managed) — $614/month
+### 方案 C：Thanos（自架）— $442/月
 
-| Item                           | Calculation               | Monthly (USD) |
-| ------------------------------ | ------------------------- | :-----------: |
-| **AMP Ingestion**              |                           |               |
-| - Tier 1 (first 2B samples)    | 2B x $0.90/10M            |     $180      |
-| - Tier 2 (next ~42.6B samples) | ~42.6B x $0.72/10M (est.) |     $307      |
-| **AMP Storage**                | ~200 GB x $0.03/GB        |      $6       |
-| **AMP Query (QSP)**            | ~10B samples x $0.10/B    |      $1       |
-| **AMG Editors**                | 5 users x $9/user         |      $45      |
-| **AMG Viewers**                | 15 users x $5/user        |      $75      |
-| Cross-region data transfer     | No DT-IN charge for AMP   |      $0       |
-| **Total**                      |                           |   **$614**    |
+| 項目 | 規格 | 每月（USD） |
+|------|------|:-----------:|
+| Thanos Query（EC2） | 2× m5.large（HA） | $140 |
+| Thanos Store Gateway（EC2） | 2× m5.large | $140 |
+| Thanos Compactor（EC2） | 1× m5.large | $70 |
+| S3 儲存 | ~500 GB 壓縮後（90 天） | $12 |
+| S3 API 請求 | PUT/GET blocks | $20 |
+| Thanos Sidecar（per region） | 與 Prometheus pod 共用 | $0 |
+| 中央 Grafana（EC2/EKS） | t3.medium | $30 |
+| 跨 Region 資料傳輸 | gRPC query fan-out | $30 |
+| **合計** | | **$442** |
 
-**What's included (no hidden costs):**
-- HA / multi-AZ redundancy
-- Auto-scaling
-- Upgrades and patching
-- 150-day default retention (configurable up to 1095 days)
-- IAM/SSO integration
+**未計入的隱藏成本：**
+- 工程師時間：每月約 4-8 小時（4+ 個元件需管理）
+- Thanos 架構的學習曲線陡峭
+
+---
+
+### 方案 D：AMP + AMG（AWS 託管）— $614/月
+
+| 項目 | 計算 | 每月（USD） |
+| ---- | ---- | :---------: |
+| **AMP 攝取** | | |
+| - Tier 1（前 20 億 samples） | 20億 × $0.90/1000萬 | $180 |
+| - Tier 2（後約 426 億 samples） | ~426億 × $0.72/1000萬（估） | $307 |
+| **AMP 儲存** | ~200 GB × $0.03/GB | $6 |
+| **AMP 查詢（QSP）** | ~100億 samples × $0.10/10億 | $1 |
+| **AMG 編輯者** | 5 人 × $9/人 | $45 |
+| **AMG 檢視者** | 15 人 × $5/人 | $75 |
+| 跨 Region 資料傳輸 | AMP DT-IN 免費 | $0 |
+| **合計** | | **$614** |
+
+**已包含（無隱藏成本）：**
+- HA / 多 AZ 備援
+- 自動擴展
+- 升級與安全修補
+- 預設 150 天保留（最長可設 1095 天）
+- IAM/SSO 整合
 - 99.9% SLA
 
 ---
 
-## 3. Total Cost of Ownership (TCO) — 1-Year View
+## 3. 總持有成本（TCO）— 一年視角
 
-### Including Estimated Operational Cost (Engineering Hours)
+### 含估算維運成本（工程師時數）
 
-Assuming engineering cost of $50/hour (internal cost allocation):
+假設工程師成本 $50/hr（內部成本分攤）：
 
-| Option | Infra $/year | Ops Hours/month | Ops $/year | **TCO/year** |
-|--------|:---:|:---:|:---:|:---:|
-| A: Federation | $2,640 | 1-2 hrs | $1,200 | **$3,840** |
-| C: Thanos | $5,304 | 4-8 hrs | $3,600 | **$8,904** |
-| B: VictoriaMetrics | $7,320 | 2-4 hrs | $1,800 | **$9,120** |
+| 方案 | 基礎設施/年 | 維運時數/月 | 維運成本/年 | **TCO/年** |
+|------|:-----------:|:-----------:|:-----------:|:----------:|
+| A: Federation | $2,640 | 1-2 hr | $1,200 | **$3,840** |
+| C: Thanos | $5,304 | 4-8 hr | $3,600 | **$8,904** |
+| B: VictoriaMetrics | $7,320 | 2-4 hr | $1,800 | **$9,120** |
 | D: AMP + AMG | $7,368 | 0.5-1 hr | $450 | **$7,818** |
 
-> When operational cost is factored in, **Option D becomes more cost-effective than Option B**,
-> despite having higher infrastructure costs. The gap widens as the team scales.
+> 計入維運成本後，**方案 D 比方案 B 更划算**，
+> 儘管基礎設施費用較高。隨著團隊規模增長，差距會拉大。
 
 ---
 
-## 4. Cost Sensitivity Analysis
+## 4. 成本敏感度分析
 
-### What if active time series per region is different?
+### 每 Region Active Series 不同時的影響
 
-| Active Series / Region | Option B (VM) | Option D (AMP) | AMP vs VM |
+| Active Series / Region | 方案 B（VM） | 方案 D（AMP） | AMP vs VM |
 |:---:|:---:|:---:|:---:|
-| 20,000 (low) | ~$450/mo | ~$280/mo | AMP cheaper |
-| 50,000 (baseline) | ~$610/mo | ~$614/mo | Roughly equal |
-| 100,000 | ~$750/mo | ~$1,100/mo | AMP 47% more |
-| 200,000 | ~$950/mo | ~$2,050/mo | AMP 116% more |
-| 500,000+ | ~$1,200/mo | ~$4,800/mo | AMP 300% more |
+| 20,000（低） | ~$450/月 | ~$280/月 | AMP 更便宜 |
+| 50,000（基準） | ~$610/月 | ~$614/月 | 幾乎相同 |
+| 100,000 | ~$750/月 | ~$1,100/月 | AMP 貴 47% |
+| 200,000 | ~$950/月 | ~$2,050/月 | AMP 貴 116% |
+| 500,000+ | ~$1,200/月 | ~$4,800/月 | AMP 貴 300% |
 
-**Key insight:** AMP is cost-competitive at ~50K series/region.
-If actual metrics volume is significantly higher (200K+), VictoriaMetrics becomes more economical.
+**關鍵洞察：** AMP 在每 Region ~50K series 時具有成本競爭力。
+若實際 metrics 量顯著更高（200K+），VictoriaMetrics 更划算。
 
-### What if scrape interval changes?
+### Scrape Interval 變化的影響
 
-| Scrape Interval | Samples/month (10 regions) | Option D Cost |
+| Scrape Interval | 每月 Samples（10 Regions） | 方案 D 成本 |
 |:---:|:---:|:---:|
-| 15 seconds | 89.3B | ~$1,100/mo |
-| **30 seconds** | **44.6B** | **~$614/mo** |
-| 60 seconds | 22.3B | ~$340/mo |
+| 15 秒 | 893 億 | ~$1,100/月 |
+| **30 秒** | **446 億** | **~$614/月** |
+| 60 秒 | 223 億 | ~$340/月 |
 
-> Doubling the scrape interval halves the AMP ingestion cost.
-> This is the most effective cost lever for AMP.
+> Scrape interval 加倍，AMP 攝取成本減半。
+> 這是降低 AMP 成本最有效的槓桿。
 
 ---
 
-## 5. Cost Optimization Strategies (for Option D)
+## 5. 方案 D 的成本優化策略
 
-| Strategy | Effort | Savings Impact |
-|----------|:---:|:---:|
-| Increase scrape interval from 30s to 60s | Low | ~50% ingestion reduction |
-| Drop unused metrics via `metric_relabel_configs` | Medium | 10-30% reduction |
-| Use recording rules for frequently queried aggregations | Medium | Reduce QSP costs |
-| Set appropriate retention period | Low | Reduce storage costs |
+| 策略 | 難度 | 節省幅度 |
+|------|:----:|:-------:|
+| Scrape interval 從 30s 調為 60s | 低 | 攝取成本降約 50% |
+| 用 `metric_relabel_configs` 丟棄不用的 metrics | 中 | 降低 10-30% |
+| 用 recording rules 預先彙總常查詢的 aggregation | 中 | 降低 QSP 費用 |
+| 設定適當的保留期 | 低 | 降低儲存費用 |
 
-Example `metric_relabel_configs` to drop high-cardinality unused metrics:
+範例 `metric_relabel_configs`，丟棄高基數但不需要的 metrics：
 ```yaml
 metric_relabel_configs:
   - source_labels: [__name__]
-    regex: 'go_.*|promhttp_.*'  # Drop Go runtime / Prometheus internal metrics
+    regex: 'go_.*|promhttp_.*'  # 丟棄 Go runtime / Prometheus internal metrics
     action: drop
 ```
 
 ---
 
-## Appendix: Pricing Sources
+## 附錄：定價來源
 
-- [AMP Pricing](https://aws.amazon.com/prometheus/pricing/)
-- [AMG Pricing](https://aws.amazon.com/grafana/pricing/)
-- [AMP Cost Optimization Guide](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-costs.html)
+- [AMP 定價](https://aws.amazon.com/prometheus/pricing/)
+- [AMG 定價](https://aws.amazon.com/grafana/pricing/)
+- [AMP 成本優化指南](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-costs.html)
 - [AWS Pricing Calculator](https://calculator.aws)
