@@ -11,7 +11,7 @@ sidebar_position: 1
     │
     ▼
 ┌──────────┐
-│  Ingress │  L7 路由規則（/api/v1/* → Service A, /dashboard/* → Service B）
+│  Ingress │  L7 路由規則（/api/* → Service A, /dashboard/* → Service B）
 └──────────┘
     │
     ▼
@@ -29,7 +29,7 @@ sidebar_position: 1
 
 ## Ingress
 
-- **本質**：L7 路由規則表，定義「什麼 path → 哪個 Service」
+- **本質**：L7 路由規則表，定義「什麼 host/path → 哪個 Service」
 - **不是 endpoint**，真正開出 endpoint 的是 Ingress Controller
 - 需要搭配 Ingress Controller 才能運作（AWS ALB Controller, NGINX 等）
 
@@ -70,15 +70,17 @@ ports:
 
 ### 內部 DNS 解析
 
+K8s 自動為每個 Service 建立 DNS record，Pod 之間可以直接用名稱互連：
+
 ```bash
-# 同 namespace → 直接用名稱
+# 同 namespace → 直接用 Service 名稱
 curl http://my-service:80
 
-# 跨 namespace → 加 namespace
-curl http://my-service.my-namespace:80
+# 跨 namespace → 加 namespace 名稱
+curl http://my-service.other-namespace:80
 
-# 完整 FQDN
-curl http://my-service.my-namespace.svc.cluster.local:80
+# 完整 FQDN（較少用，但最明確）
+curl http://my-service.other-namespace.svc.cluster.local:80
 ```
 
 ---
@@ -87,11 +89,11 @@ curl http://my-service.my-namespace.svc.cluster.local:80
 
 | 類型 | 核心特性 | 典型用途 |
 |------|---------|---------|
-| **Deployment** | 無狀態，replicas 自由調整 | API server、web app、proxy |
-| **StatefulSet** | 有狀態，固定名字 + 固定 PVC | 資料庫、時序資料庫、Grafana |
-| **DaemonSet** | 每台 node 跑一個，node 增加自動擴展 | log agent、metrics exporter、node 層工具 |
+| **Deployment** | 無狀態，replicas 自由調整 | API server、web app、proxy、reverse proxy |
+| **StatefulSet** | 有狀態，固定名字 + 固定 PVC | 資料庫、時序資料庫（TSDB）、Grafana |
+| **DaemonSet** | 每台 node 跑一個，node 增加自動擴展 | log collector、node metrics exporter |
 | **Job** | 跑完（exit 0）就停止，不重啟 | DB migration、一次性腳本 |
-| **CronJob** | 定時產生 Job | 定時備份、定時清理 |
+| **CronJob** | 定時產生 Job | 定時備份、定時清理、定期報表 |
 | **ReplicaSet** | 幾乎不直接用 | Deployment 底層自動建立，管 Pod 數量 |
 
 ### 生命週期
@@ -105,14 +107,16 @@ CronJob                              → 定時產生 Job
 ### StatefulSet vs Deployment
 
 ```
-Deployment（web-api、proxy）：
+Deployment（API server、proxy）：
   Pod-abc123 重啟 → 可能變成 Pod-xyz789（名字不固定）
   掛在哪台 node 無所謂，沒有自己的硬碟
 
-StatefulSet（postgres、time-series-db）：
-  postgres-0 重啟 → 還是 postgres-0（名字固定）
-  有固定的 PVC，postgres-0 的 /data 永遠掛同一顆硬碟
+StatefulSet（資料庫、TSDB）：
+  db-0 重啟 → 還是 db-0（名字固定）
+  有固定的 PVC，db-0 的 /data 永遠掛同一顆硬碟
 ```
+
+**選擇原則**：需要持久化資料或固定 identity → StatefulSet，其他 → Deployment。
 
 ### DaemonSet
 
@@ -120,15 +124,15 @@ StatefulSet（postgres、time-series-db）：
 # cluster 有 3 台 node
 
 Deployment replicas=2：           DaemonSet：
-  node-1: [api-server]             node-1: [log-agent]
-  node-2: [api-server]             node-2: [log-agent]
-  node-3: (空的)                   node-3: [log-agent]
+  node-1: [api-server]             node-1: [log-collector]
+  node-2: [api-server]             node-2: [log-collector]
+  node-3: (空的)                   node-3: [log-collector]
 
 新 node-4 加入：
-  node-4: (不會自動加)              node-4: [log-agent] ← 自動！
+  node-4: (不會自動加)              node-4: [log-collector] ← 自動！
 ```
 
-適合「需要收集每台機器資料」的 agent，例如 log collector、node metrics exporter。
+適合「需要在每台機器上收集資料」的 agent，例如 log collector、node metrics exporter。
 
 ### ReplicaSet — 為什麼不直接用
 
@@ -167,11 +171,11 @@ kubectl logs -f -l app=my-app
 kubectl logs -l app=my-app --all-containers | grep "keyword"
 ```
 
-多 replica 時每個 Pod 只有部分流量的 log，要查特定 request 建議用集中式 log（CloudWatch Logs Insights）或 trace ID。
+多 replica 時每個 Pod 只有部分流量的 log，要查特定 request 建議用集中式 log（如 CloudWatch Logs Insights、Loki）或 trace ID。
 
 ---
 
-## AWS 容器服務比較
+## 容器服務比較（以 AWS 為例）
 
 | | EKS (Kubernetes) | Lambda |
 |---|---|---|
@@ -205,8 +209,8 @@ PV — PersistentVolume（實際的磁碟）
 ### 類比
 
 ```
-StorageClass = 餐廳菜單（定義有哪些選項）
-PVC = 點餐單（客人說：我要大份 500Gi）
+StorageClass = 餐廳菜單（定義有哪些磁碟規格可選）
+PVC = 點餐單（客人：我要 gp3 套餐，大份 500Gi）
 PV = 廚房做出來的那道菜（實際的 volume）
 ```
 
@@ -240,15 +244,15 @@ volumeClaimTemplate:
 ### 完整建立流程
 
 ```
-1. StorageClass "gp3" 已建好
+1. StorageClass "gp3" 已建好（定義磁碟規格）
 
-2. Deployment/StatefulSet 宣告 PVC：storageClassName: gp3, storage: 500Gi
+2. StatefulSet 宣告 PVC：storageClassName: gp3, storage: 500Gi
 
-3. K8s scheduler 把 pod 排到 node-1（某個 AZ）
+3. K8s scheduler 把 pod 排到 node-1（us-west-2a）
 
 4. WaitForFirstConsumer → 現在才開始建 volume
    K8s 看 PVC → 找到 StorageClass "gp3" → 呼叫 provisioner
-   → 在同一個 AZ 建立 500Gi 磁碟
+   → 雲端 API 建立 500Gi 磁碟（同 AZ）
 
 5. K8s 建立 PV，綁定 PVC ↔ PV ↔ 實際磁碟
 
@@ -259,34 +263,57 @@ volumeClaimTemplate:
 
 | 事件 | PVC | PV | 實際磁碟 |
 |---|---|---|---|
-| Pod 建立 | 建立 | 自動建立 | 自動建立 |
+| Pod 建立 | 建立 | 自動建立 | 雲端自動建 |
 | Pod 重啟 | 不變 | 不變 | 不變（資料保留） |
 | Pod 搬到其他 node（同 AZ） | 不變 | 不變 | detach + reattach |
 | Pod 刪除 | 刪除 | 看 reclaimPolicy | Retain → 保留 / Delete → 刪除 |
 
-### reclaimPolicy 差別
+### reclaimPolicy
 
 ```
-Retain  → pod 刪了磁碟還在，資料保留（適合資料庫、監控儲存）
+Retain  → pod 刪了磁碟還在，資料保留（適合資料庫、TSDB）
 Delete  → pod 刪了磁碟也自動刪（適合暫時性 cache）
 ```
 
-### volumeBindingMode 差別
+### volumeBindingMode
 
 ```
-Immediate           → PVC 建立時立刻建磁碟（可能跟 pod 不同 AZ → 掛載失敗）
-WaitForFirstConsumer → 等 pod 排程後才建（確保磁碟跟 pod 在同一個 AZ）
+Immediate           → PVC 建立時立刻建磁碟
+                       問題：可能跟 pod 不同 AZ → 掛載失敗
+WaitForFirstConsumer → 等 pod 排程後才建
+                       確保磁碟跟 pod 在同一個 AZ ✓
 ```
 
 ### 雲端磁碟 vs Node 本地磁碟
 
-```
-雲端磁碟（EBS / PD）= 獨立的網路磁碟
-  → node 刪了磁碟還在
-  → pod 搬到其他 node 可以重新掛載
-  → 適合需要持久化的資料
+| | 雲端磁碟（EBS / PD） | Node 本地磁碟 |
+|---|---|---|
+| 本質 | 獨立的網路磁碟 | Node 自帶的 root disk |
+| Node 刪了 | 磁碟還在 | 資料消失 |
+| Pod 搬家 | 可以重新掛載到其他 Node | 不行 |
+| 適合 | 需要持久化的資料 | 暫時性 cache |
 
-Node 本地磁碟 = node 的 root disk
-  → node 刪了資料就沒了
-  → 適合暫時性 cache
+### IOPS vs Throughput
+
 ```
+IOPS = 每秒幾次讀寫操作（Input/Output Operations Per Second）
+  → 影響：大量小型寫入（例如即時 metrics 寫入，每筆很小但頻率高）
+  → 類比：圖書館員每秒能拿幾本書
+
+Throughput = 每秒搬多少資料量（MiB/s）
+  → 影響：大量連續讀取（例如查詢歷史資料，一次掃描幾 GB）
+  → 類比：圖書館員每秒能搬多少公斤的書
+```
+
+### AWS EBS gp2 vs gp3（常見選擇）
+
+| | gp2 | gp3 |
+|---|---|---|
+| 價格/GiB/月 | $0.10 | $0.08（便宜 20%） |
+| IOPS | 跟容量綁定（3 IOPS/GiB） | 固定 3000 基礎（不管容量） |
+| Throughput | 最高 250 MiB/s | 125 MiB/s 基礎，可升到 1000 MiB/s |
+| IOPS 可調 | 不行，想加 IOPS 就要加容量 | 可以獨立調整，最高 16000 |
+
+gp3 幾乎在所有場景都比 gp2 好。AWS 官方建議新 workload 用 gp3。
+
+**gp2 的痛點**：想要 3000 IOPS 就必須開 1000GiB 的 volume（浪費空間和錢）。gp3 不管多小的 volume 都直接給 3000 IOPS。
