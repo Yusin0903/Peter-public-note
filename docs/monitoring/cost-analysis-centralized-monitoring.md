@@ -4,7 +4,9 @@ sidebar_position: 4
 
 # 集中式監控系統 — 成本分析
 
-> **狀態：** 參考分析
+> **狀態：** 初步估算（基於假設值，非實測）
+> **重要：** 此分析假設每 Region 50K active series。實測後發現實際為平均 613K series，導致 AMP 成本估算嚴重偏低（$614/月 vs 實際 ~$8,460/月）。
+> **請參閱最終決策文件：** [集中式多 Region 監控 — 技術選型決策](./monitoring-stack-decision)
 > **相關文件：** [技術提案](./centralized-monitoring-proposal)
 
 ---

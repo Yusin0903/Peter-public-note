@@ -7,13 +7,18 @@ slug: /
 
 Backend engineering learning notes covering AWS, JavaScript/TypeScript, Kubernetes, Monitoring, Database, Python, Keycloak, and more.
 
+## About These Notes
+
+My background is primarily Python development, so many notes use **Python code as analogies** to build intuition quickly.
+These notes aren't meant to be official documentation — they're written so that "past-me who only wrote Python" can understand things fast.
+
 ## Sections
 
 | Section | Content |
 |---------|---------|
-| **AWS** | DynamoDB, SQS, EC2 vs fully managed services |
+| **AWS** | DynamoDB, SQS, EC2 vs fully managed services, NAT Gateway vs Transit Gateway |
 | **JavaScript / TypeScript** | Module system, async/await, connection pool, EventEmitter |
-| **Kubernetes & Docker** | Pod, Service, Ingress, CronJob, Docker commands & NVIDIA GPU config |
+| **Kubernetes & Docker** | Ingress & Service, Workload types, Storage, CronJob, observability, Docker & NVIDIA GPU |
 | **Monitoring** | Prometheus, VictoriaMetrics, Thanos, AMP centralized monitoring, local docker-compose stack |
 | **Database** | Alembic, SQLAlchemy ORM, SQLite → PostgreSQL migration, PostgreSQL notes |
 | **Python** | Context Manager, Singleton pattern |

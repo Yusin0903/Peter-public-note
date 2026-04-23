@@ -7,6 +7,11 @@ slug: /
 
 後端工程師的學習筆記，涵蓋 AWS、JavaScript/TypeScript、Kubernetes、Monitoring、Database、Python、Keycloak 等主題。
 
+## 關於這份筆記
+
+因為以前都是開發 Python 為主，所以很多學習筆記都會用 **Python 程式碼做類比**，幫助自己快速建立直覺。  
+這份筆記的目標不是當作官方文件，而是「讓以前只寫 Python 的自己能快速看懂」。
+
 ## 章節說明
 
 | 章節 | 內容 |

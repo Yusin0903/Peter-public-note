@@ -32,6 +32,13 @@ const sidebars = {
       label: 'Kubernetes & Docker',
       items: [
         'kubernetes/k8s-concepts',
+        'kubernetes/k8s-ingress-and-service',
+        'kubernetes/k8s-workloads',
+        'kubernetes/k8s-storage',
+        'kubernetes/k8s-cronjob',
+        'kubernetes/k8s-observability',
+        'kubernetes/k8s-and-aws-glossary',
+        'kubernetes/k8s-deployment-tools',
         'kubernetes/docker-tips',
       ],
     },
