@@ -106,3 +106,192 @@ import httpx
 # 在 K8s Pod 裡，這樣就能連到同 namespace 的另一個服務
 response = httpx.get("http://inference-service:8081/predict")
 ```
+
+---
+
+## Health Check：Liveness vs Readiness Probe
+
+這是 inference system 最重要的設定之一。Model 載入可能需要 30-120 秒，如果沒設好，K8s 會在 model 還沒 ready 時就把流量打過來，造成 500 error。
+
+### 兩種 Probe 的差異
+
+| Probe | 問的問題 | 失敗的後果 |
+|-------|---------|-----------|
+| **Readiness** | 「這個 Pod 準備好接流量了嗎？」 | 從 Service 的 endpoint 移除（不殺，只是不送流量） |
+| **Liveness** | 「這個 Pod 還活著嗎？」 | 殺掉並重啟 Pod |
+
+```
+Model 載入中（30s）：
+  Readiness = NOT READY → Service 不把流量送來 ✓
+  Liveness  = ALIVE     → Pod 不被殺 ✓
+
+Model 載入完成：
+  Readiness = READY     → Service 開始送流量 ✓
+
+Model 掛掉（deadlock / OOM）：
+  Liveness  = DEAD      → K8s 重啟 Pod ✓
+```
+
+> **Python 類比**：
+> ```python
+> # Readiness = 你的 FastAPI startup event 還沒跑完
+> @app.on_event("startup")
+> async def load_model():
+>     app.state.model = load_big_model()  # 這段跑完前 readiness = False
+>     app.state.ready = True
+>
+> @app.get("/health/ready")
+> async def readiness():
+>     if not app.state.ready:
+>         raise HTTPException(503)  # 還沒 ready
+>     return {"status": "ready"}
+>
+> # Liveness = 心跳檢測，確認程式沒卡死
+> @app.get("/health/live")
+> async def liveness():
+>     return {"status": "alive"}  # 只要程式能回應就好
+> ```
+
+### 完整 Probe 設定範例（推理服務）
+
+```yaml
+containers:
+  - name: inference-server
+    image: my-model-server:latest
+    ports:
+      - containerPort: 8080
+
+    # Readiness Probe：model 載入完才接流量
+    readinessProbe:
+      httpGet:
+        path: /health/ready
+        port: 8080
+      initialDelaySeconds: 30   # 等 30s 再開始檢查（model 需要時間載入）
+      periodSeconds: 10          # 每 10s 檢查一次
+      failureThreshold: 6        # 連續 6 次失敗才標記 not ready（60s 緩衝）
+      successThreshold: 1        # 1 次成功就標記 ready
+
+    # Liveness Probe：確認程式沒有掛死
+    livenessProbe:
+      httpGet:
+        path: /health/live
+        port: 8080
+      initialDelaySeconds: 60   # 比 readiness 更晚開始（等 model 載入完）
+      periodSeconds: 30          # 每 30s 檢查一次
+      failureThreshold: 3        # 連續 3 次失敗才重啟（90s 容忍）
+      timeoutSeconds: 5          # 5s 沒回應算一次失敗
+```
+
+**inference system 的設定建議**：
+- `initialDelaySeconds` 設為你 model 載入時間 × 1.5（留緩衝）
+- Readiness 的 `failureThreshold` 要比 Liveness 寬鬆（不要輕易殺 Pod）
+- 如果 model 每次重啟都要重新下載（幾分鐘），設錯 Liveness 會陷入無窮重啟地獄
+
+---
+
+## Resource Requests & Limits
+
+K8s 排程器靠 `requests` 決定把 Pod 放哪台機器，靠 `limits` 防止一個 Pod 吃光整台機器資源。
+
+### CPU / Memory 設定
+
+```yaml
+resources:
+  requests:
+    cpu: "2"           # 保證有 2 顆 CPU core
+    memory: "8Gi"      # 保證有 8GB RAM
+  limits:
+    cpu: "4"           # 最多用到 4 顆 CPU（可以 burst）
+    memory: "16Gi"     # 超過 16GB 就被 OOMKilled
+```
+
+> **Python 類比**：
+> ```python
+> # requests = 你跟 AWS 說「我的 EC2 至少要 8GB RAM」→ 排機器用
+> # limits   = 你設了 ulimit，超過就被 kill
+>
+> import resource
+> # 類似 limits.memory
+> resource.setrlimit(resource.RLIMIT_AS, (16 * 1024**3, 16 * 1024**3))
+> ```
+
+### GPU 設定（inference system 必看）
+
+GPU 在 K8s 裡是 **extended resource**，跟 CPU/Memory 不同的是：**requests 必須等於 limits**，不能 burst。
+
+```yaml
+resources:
+  requests:
+    nvidia.com/gpu: "1"   # 申請 1 張 GPU
+  limits:
+    nvidia.com/gpu: "1"   # 必須跟 requests 一樣
+  # CPU/Memory 一樣要設，不然會被排到沒 GPU 的機器
+  requests:
+    nvidia.com/gpu: "1"
+    cpu: "4"
+    memory: "16Gi"
+  limits:
+    nvidia.com/gpu: "1"
+    cpu: "8"
+    memory: "32Gi"
+```
+
+**常見錯誤**：只設 GPU 忘了設 CPU/Memory，導致 Pod 被排到沒有 GPU 的機器後卡住。
+
+完整的 GPU inference Pod 設定見 [Workload 類型](./k8s-workloads) 的 YAML 範例。
+
+---
+
+## HPA — Horizontal Pod Autoscaler
+
+HPA 根據 metrics 自動增減 Pod 數量。對 inference system 來說，用 GPU 利用率或 request queue 深度來 scale 比 CPU 更準確。
+
+```
+流量上升 → CPU 使用率升高 → HPA 增加 replica
+流量下降 → CPU 使用率下降 → HPA 減少 replica
+（有 cooldown 防止震盪）
+```
+
+### 基礎 CPU HPA
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: inference-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: inference-server
+  minReplicas: 2      # 最少 2 個（保持基本可用性）
+  maxReplicas: 10     # 最多 10 個（防止爆炸性 scale）
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # CPU 平均超過 70% 就 scale out
+```
+
+> **Python 類比**：
+> ```python
+> # HPA 就像自動調整 Celery worker 數量
+> from celery.signals import worker_ready
+>
+> # 手動版 HPA 概念：
+> current_workers = len(celery_app.control.inspect().active())
+> queue_depth = redis.llen("celery")
+>
+> if queue_depth / current_workers > 10:  # 每個 worker 超過 10 個 task
+>     scale_out(workers=current_workers + 2)
+> elif queue_depth / current_workers < 2:
+>     scale_in(workers=max(2, current_workers - 1))
+> ```
+
+### 注意事項
+
+- GPU Pod 用 HPA 要小心：GPU 機器很貴，scale out 慢（spot instance warm-up）
+- HPA 和 resource requests 搭配才有意義：沒設 requests 的 Pod HPA 算不出利用率
+- `minReplicas: 0` 可以節省成本，但會有 cold start（model 重新載入的時間）

@@ -23,7 +23,7 @@ resources:
     memory: "512Mi"  # 最多用 512 MB
 ```
 
-> CPU 單位：`m` = millicores，1000m = 1 vCPU  
+> CPU 單位：`m` = millicores，1000m = 1 vCPU
 > Memory 單位：`Mi` = Mebibytes，1024 Mi ≈ 1 GB
 
 ---

@@ -172,6 +172,137 @@ WaitForFirstConsumer → 等 pod 排程後才建
 
 ---
 
+## emptyDir — Pod 內容器共享的臨時 Volume
+
+`emptyDir` 是 Pod 級別的臨時 Volume：**Pod 存在時存在，Pod 刪了就消失**。最重要的用途是讓同一個 Pod 裡的多個容器共享資料。
+
+```yaml
+spec:
+  containers:
+    - name: inference-server
+      volumeMounts:
+        - name: shared-output
+          mountPath: /output
+
+    - name: result-uploader       # sidecar
+      volumeMounts:
+        - name: shared-output
+          mountPath: /output      # 同一個 volume，可以讀 inference 結果
+
+  volumes:
+    - name: shared-output
+      emptyDir: {}                # 預設用磁碟空間
+
+    - name: shm
+      emptyDir:
+        medium: Memory            # 使用 RAM（tmpfs），適合 /dev/shm
+        sizeLimit: 8Gi            # 限制大小，防止 OOM
+```
+
+**三種 emptyDir 用途**：
+
+| 用途 | 設定 | 說明 |
+|---|---|---|
+| Sidecar 共享資料 | `emptyDir: {}` | init container 下載的 model，主容器使用 |
+| PyTorch shared memory | `medium: Memory` | `/dev/shm`，DataLoader 多 worker 需要 |
+| 快取計算結果 | `emptyDir: {}` | 同一個 Pod 多次請求複用的暫存結果 |
+
+> **Python 類比**：
+> ```python
+> # emptyDir 就像 Python process 之間的共享記憶體
+> import multiprocessing
+>
+> # emptyDir（磁碟）= tempfile.mkdtemp()，process 間共享一個資料夾
+> import tempfile
+> shared_dir = tempfile.mkdtemp()  # process 結束就清掉（Pod 刪了就消失）
+>
+> # emptyDir（Memory）= multiprocessing.shared_memory
+> shm = multiprocessing.shared_memory.SharedMemory(create=True, size=8*1024**3)
+> # 程式結束就消失，但存取速度是 RAM 速度
+> ```
+
+**inference system 的典型場景**：
+```yaml
+# init container 從 S3 下載 model → 寫到 emptyDir
+# 主容器從 emptyDir 載入 model（不用每次從 S3 拉）
+volumes:
+  - name: model-cache
+    emptyDir:
+      sizeLimit: 20Gi    # 限制 20GB，防止把 node 磁碟塞爆
+```
+
+---
+
+## ConfigMap as Volume Mount
+
+ConfigMap 不只可以當環境變數，還可以掛成檔案。適合把設定檔（YAML、JSON、.env）注入到容器裡。
+
+```yaml
+# 建立 ConfigMap（存設定檔內容）
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: inference-config
+data:
+  config.yaml: |
+    model:
+      name: llm-7b
+      max_tokens: 2048
+      temperature: 0.7
+    server:
+      workers: 4
+      timeout: 30
+  logging.conf: |
+    [loggers]
+    keys=root
+    [handlers]
+    keys=consoleHandler
+```
+
+```yaml
+# 在 Deployment 裡掛成檔案
+spec:
+  containers:
+    - name: inference-server
+      volumeMounts:
+        - name: config-volume
+          mountPath: /app/config    # ConfigMap 的 key 變成這個資料夾裡的檔案名稱
+          readOnly: true
+
+  volumes:
+    - name: config-volume
+      configMap:
+        name: inference-config
+        # 結果：
+        # /app/config/config.yaml   ← ConfigMap 的 config.yaml key
+        # /app/config/logging.conf  ← ConfigMap 的 logging.conf key
+```
+
+> **Python 類比**：
+> ```python
+> # ConfigMap as volume = 把設定檔放到一個資料夾，程式從那裡讀
+> import yaml
+>
+> # 程式讀 /app/config/config.yaml（由 ConfigMap 注入）
+> with open("/app/config/config.yaml") as f:
+>     config = yaml.safe_load(f)
+>
+> # 等同於你本地開發時：
+> # config = yaml.safe_load(open("config/config.yaml"))
+> # K8s 幫你把 ConfigMap 的內容變成那個檔案
+> ```
+
+**ConfigMap vs Secret vs 環境變數選擇**：
+
+| 資料類型 | 推薦方式 |
+|---|---|
+| 非機密設定（model 參數、timeout） | ConfigMap（環境變數或 volume） |
+| 機密資料（API key、DB 密碼） | Secret（volume 掛載，避免環境變數洩漏） |
+| 需要程式動態讀取（不重啟就能更新） | ConfigMap/Secret as volume（K8s 會自動更新檔案） |
+| 簡單的單一值 | 環境變數 |
+
+---
+
 ## IOPS vs Throughput
 
 ```
