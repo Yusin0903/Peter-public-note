@@ -109,6 +109,102 @@ response = httpx.get("http://inference-service:8081/predict")
 
 ---
 
+## AWS ALB Target Type: Instance vs IP Mode
+
+When using AWS ALB Controller with EKS, the ALB needs to know **where to send traffic**. There are two modes:
+
+### Instance Mode (default)
+
+```
+Client → ALB → Node EC2:NodePort → kube-proxy (iptables NAT) → Pod:8427
+               ↑                    ↑
+               2 hops               Extra NAT layer
+```
+
+- ALB registers **Node EC2 instances** as targets
+- Traffic hits Node's NodePort → kube-proxy forwards to correct Pod
+- **Requires**: Service type must be `NodePort` (otherwise no NodePort → port=0 → error)
+- No annotation needed (this is the default)
+
+ALB 把流量送到 Node 的 NodePort，Node 上的 kube-proxy 再轉發到 Pod。Service 必須是 NodePort type。
+
+### IP Mode
+
+```
+Client → ALB → Pod:8427
+               ↑
+               1 hop, direct
+```
+
+- ALB registers **Pod IPs** directly as targets
+- Traffic goes straight to Pod, bypasses Node and kube-proxy
+- **Works with any Service type** (ClusterIP or NodePort)
+- Requires annotation: `alb.ingress.kubernetes.io/target-type: ip`
+
+ALB 直接送流量到 Pod IP，不經過 Node、不經過 kube-proxy。ClusterIP service 就可以用。
+
+### Setting in Ingress YAML
+
+```yaml
+# Instance mode (default, no annotation needed)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    # No target-type annotation → defaults to instance mode
+    # Service MUST be NodePort type
+
+---
+# IP mode (explicit annotation)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip    # ← This line
+    # Service can be ClusterIP or NodePort
+```
+
+### Comparison / 比較
+
+| | Instance Mode (NodePort) | IP Mode |
+|---|---|---|
+| Service type required / 要求 | Must be `NodePort` | `ClusterIP` or `NodePort` |
+| ALB target / 註冊目標 | Node EC2 instance | Pod IP |
+| Traffic hops / 流量跳數 | 2 (ALB→Node→Pod) | 1 (ALB→Pod) |
+| Goes through kube-proxy / 經過 kube-proxy | Yes (iptables NAT) | No |
+| Latency / 延遲 | Slightly higher | Lower |
+| Opens port on Node / Node 開 port | Yes (30000-32767) | No |
+| Pod scaling response / 擴縮反應 | Slower (update Node targets) | Faster (register/remove Pod IPs directly) |
+| Health check accuracy / 健康檢查準確度 | Hits Node, may not reflect Pod state | Hits Pod directly |
+| EKS support / EKS 支援 | All versions | Requires VPC CNI (installed by default on EKS) |
+
+### When to use which / 什麼時候用哪個
+
+| Scenario / 場景 | Recommendation / 建議 |
+|---|---|
+| Existing services with `NodePort` type | Instance mode (default), no change needed / 不用改 |
+| New services with `ClusterIP` type (e.g. Helm charts, Operators) | IP mode — add `target-type: ip` / 加一行 annotation |
+| Want lower latency / 要更低延遲 | IP mode |
+| Mixed in same ALB group / 同一個 ALB group 混用 | OK — each Ingress can have different target-type / 可以，每個 Ingress 各自設 |
+
+### Common error without correct setting / 常見錯誤
+
+If your Service is `ClusterIP` but you don't set `target-type: ip`:
+
+```
+Warning  FailedDeployModel  ingress  Failed deploy model due to InvalidParameter:
+  1 validation error(s) found.
+  - minimum field value of 1, CreateTargetGroupInput.Port.
+```
+
+This means ALB Controller tried to register NodePort but got `port=0` because ClusterIP services don't have a NodePort.
+
+如果 Service 是 ClusterIP 但沒設 `target-type: ip`，ALB Controller 拿到 port=0 → AWS 說 port 最小值是 1 → 失敗。
+
+---
+
 ## Health Check：Liveness vs Readiness Probe
 
 這是 inference system 最重要的設定之一。Model 載入可能需要 30-120 秒，如果沒設好，K8s 會在 model 還沒 ready 時就把流量打過來，造成 500 error。
