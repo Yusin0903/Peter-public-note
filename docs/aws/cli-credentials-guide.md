@@ -92,16 +92,16 @@ aws configure
 ### 方法三：多個 Profile（管理多個帳號）
 
 ```bash
-# 設定 stg profile
-aws configure --profile stg
-# 輸入 STG 帳號的 credentials
+# 設定環境 profile（例：staging）
+aws configure --profile staging
+# 輸入該環境帳號的 credentials
 
 # 設定 prod profile
 aws configure --profile prod
 # 輸入 PROD 帳號的 credentials
 
 # 使用指定 profile
-aws s3 ls --profile stg
+aws s3 ls --profile staging
 aws ecr describe-repositories --region us-east-1 --profile prod
 ```
 
@@ -112,7 +112,7 @@ aws ecr describe-repositories --region us-east-1 --profile prod
 aws_access_key_id = AKIA...
 aws_secret_access_key = ...
 
-[stg]
+[staging]
 aws_access_key_id = ASIA...
 aws_secret_access_key = ...
 aws_session_token = EXAMPLE

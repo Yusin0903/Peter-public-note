@@ -352,8 +352,8 @@ schedule.every(30).seconds.do(scrape)  # scrape_interval = 30s
 | 間隔 | 每小時 scrape 次數 | 說明 |
 |:---:|:---:|------|
 | 15s | 240 次 | 很高頻，成本最高 |
-| **30s** | **120 次** | **業界預設** |
-| 60s | 60 次 | 成本減半，犧牲一點即時性 |
+| 30s | 120 次 | 常見實務值 |
+| **60s** | **60 次** | **Prometheus 預設（`global.scrape_interval` 預設值為 1m）** |
 
 查詢目前設定：
 ```promql

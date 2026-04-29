@@ -248,7 +248,7 @@ Central Prometheus  ──/federate──▶  Region 1 Prometheus
 ## 遷移策略（零中斷）
 
 ```
-步驟 1：在一個 Region（INT/staging）部署 VictoriaMetrics + 中央 Grafana
+步驟 1：在一個 Region（驗證環境）部署 VictoriaMetrics + 中央 Grafana
 步驟 2：在一個 Region 的 Prometheus 加上 remote_write
 步驟 3：驗證資料 + dashboard
 步驟 4：逐一推廣到其餘 Region

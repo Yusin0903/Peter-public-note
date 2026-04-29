@@ -141,10 +141,10 @@ terraform/
 │   └── modules/
 │       └── monitoring/
 └── terragrunt/
-    ├── int/
-    │   └── terragrunt.hcl      # INT 環境的 inputs
-    ├── us-stg/
-    │   └── terragrunt.hcl      # STG 環境的 inputs
+    ├── staging/
+    │   └── terragrunt.hcl      # staging 環境的 inputs
+    ├── us-prod/
+    │   └── terragrunt.hcl      # prod 環境的 inputs
     └── us-prod/
         └── terragrunt.hcl      # PROD 環境的 inputs
 ```
@@ -206,7 +206,7 @@ terragrunt run-all apply
 | 角色 | IaC 工具本體 | Terraform 的多環境管理 wrapper |
 | 解決問題 | 定義 AWS 資源 | 避免多環境重複設定 |
 | 設定檔 | `.tf` 檔案 | `terragrunt.hcl` |
-| 常見搭配 | 單一環境 | 多環境（int/stg/prod） |
+| 常見搭配 | 單一環境 | 多環境（staging/prod/...） |
 
 ---
 

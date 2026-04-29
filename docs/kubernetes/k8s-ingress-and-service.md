@@ -391,3 +391,167 @@ spec:
 - GPU Pod 用 HPA 要小心：GPU 機器很貴，scale out 慢（spot instance warm-up）
 - HPA 和 resource requests 搭配才有意義：沒設 requests 的 Pod HPA 算不出利用率
 - `minReplicas: 0` 可以節省成本，但會有 cold start（model 重新載入的時間）
+
+---
+
+## AWS EKS: Ingress 與 ALB 的關係
+
+Ingress 本身**不是**網路入口，它只是一份 YAML 規則文件。真正建立 Load Balancer 的是 Ingress Controller。
+
+### 建立 ALB 的前提條件
+
+Ingress 建立後**不一定**會自動建立 ALB，需要同時滿足：
+
+1. 叢集中已安裝 **AWS Load Balancer Controller**
+2. Ingress 的 `ingressClassName: alb`（或 annotation `kubernetes.io/ingress.class: alb`）
+3. Controller 有正確的 **IAM 權限**（如 CreateLoadBalancer、AddTags 等）
+4. VPC subnet 有正確的 **tags**（`kubernetes.io/role/internal-elb` 或 `kubernetes.io/role/elb`）
+
+### 不會建立新 ALB 的情況
+
+| 情況 | 結果 |
+|------|------|
+| 沒裝 AWS LB Controller | Ingress 卡住，沒有 address，不會有任何動作 |
+| 用其他 IngressClass（nginx、traefik） | 建立對應的 LB（NGINX 通常搭配 NLB/CLB） |
+| 多個 Ingress 共用 `group.name` | 掛到既有 ALB 上，不會建新的 |
+
+### 流程（條件都滿足時）
+
+```
+你寫 Ingress YAML（規則, ingressClassName: alb）
+  → AWS LB Controller 偵測到新的 Ingress
+    → 檢查有沒有同 group.name 的 ALB
+      → 有 → 掛到既有 ALB（新增 listener rule）
+      → 沒有 → 建立新 ALB
+    → ALB 根據 Ingress 裡的 host/path 規則轉發到 Pod
+```
+
+刪除 Ingress → 如果是該 ALB group 的最後一個 Ingress，ALB 也會自動被刪除。
+
+### 為什麼 Pod 不能直接對外
+
+```
+外部流量 → ??? → Pod
+```
+
+Pod IP 是 cluster 內部的（VPC CNI 分配），外部網路連不到。一定需要一個 Load Balancer 作為入口：
+
+- **Ingress + ALB** — L7 入口，適合 HTTP/HTTPS 服務
+- **Service LoadBalancer + NLB** — L4 入口，適合 TCP/UDP 服務
+
+---
+
+## ALB vs NLB 完整比較
+
+### 基本差異
+
+| | ALB (Application LB) | NLB (Network LB) |
+|---|---|---|
+| **OSI 層級** | L7 (HTTP/HTTPS) | L4 (TCP/UDP) |
+| **理解的東西** | HTTP header、host、path、method | 只看 IP + port |
+| **TLS** | ALB 做 TLS termination（需要 ACM cert） | TCP passthrough（不管 TLS） |
+| **路由能力** | host-based、path-based、header-based | 無，一個 port 對應一個 target group |
+| **延遲** | 較高（要解析 HTTP） | 超低（純 TCP 轉發） |
+| **費用** | 按 LCU（規則數+連線數+頻寬） | 按 NLCU（連線數+頻寬），通常較便宜 |
+| **靜態 IP** | 不支援 | 支援（可綁 Elastic IP） |
+
+### K8s 裡怎麼建
+
+| | ALB | NLB |
+|---|---|---|
+| **K8s 資源** | Ingress | Service (type: LoadBalancer) |
+| **觸發方式** | `ingressClassName: alb` | Service annotations |
+| **誰建 LB** | AWS LB Controller | AWS LB Controller |
+
+```yaml
+# ALB — 透過 Ingress 建立
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+  - host: grafana.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 80
+```
+
+```yaml
+# NLB — 透過 Service 建立
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+spec:
+  type: LoadBalancer
+  selector:
+    app: vmauth
+  ports:
+    - port: 8427
+      targetPort: 8427
+      protocol: TCP
+```
+
+### 什麼時候用哪個
+
+| 場景 | 選擇 | 原因 |
+|------|------|------|
+| HTTP 網頁服務（Grafana、Web App） | **ALB** | 需要 HTTPS、host/path routing、redirect |
+| Metrics 寫入（Prometheus remote_write） | **NLB** | 只需要 TCP 轉發，不需要 TLS termination |
+| gRPC 服務 | **ALB** 或 **NLB** | ALB 支援 gRPC（L7），NLB 也行（L4 TCP） |
+| 需要固定 IP | **NLB** | ALB 不支援靜態 IP |
+| 多個服務共用一個 LB | **ALB** | 用 Ingress group 共用，靠 host/path 分流 |
+
+### ALB Ingress Group（共用 ALB）
+
+多個 Ingress 可以共用同一個 ALB，靠 `group.name` 綁定，`group.order` 決定規則優先順序：
+
+```
+ALB (group: monitor-ingress-controller)
+  ├── order 1: host=vmauth.xxx    → vmauth Pods
+  ├── order 2: host=grafana.xxx   → grafana-central Pods
+  └── order 10: wildcard *         → legacy grafana Pods
+```
+
+每個 Ingress 獨立設定自己的 host、path、target-type，但流量都走同一個 ALB，省錢也省 DNS 設定。
+
+### Route53 DNS 指向 LB
+
+LB 建立後 AWS 會自動分配一個很長的 DNS name，你無法自訂。要用好記的域名需要 Route53：
+
+| 方式 | 適用場景 |
+|------|---------|
+| **A record + Alias → ALB** | 推薦。免費、少一次 DNS lookup、支援 zone apex |
+| **CNAME → LB DNS name** | 可用但不推薦。多一次 lookup、要收費、不能用在 zone apex |
+
+Alias 是 Route53 專屬功能，告訴 Route53「這個域名 = 那個 ALB」，Route53 自動追蹤 ALB IP 變化回給查詢者。
+
+### 實際案例：監控架構的 LB 分配
+
+```
+Central Grafana（HTTP 網頁）
+  → ALB (Ingress, L7)
+    → HTTPS TLS termination (ACM cert)
+    → host-based routing
+    → grafana-central Pod :80
+
+vmauth（Prometheus remote_write 接收端）
+  → NLB (Service LoadBalancer, L4)
+    → TCP passthrough, 不需要 TLS
+    → vmauth Pod :8427
+```
+
+Grafana 用 ALB 因為需要 HTTPS + host routing；vmauth 用 NLB 因為只需要 TCP 轉發。

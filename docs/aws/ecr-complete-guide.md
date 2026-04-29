@@ -36,7 +36,7 @@ ECR Registry（帳號層級）
 <account_id>.dkr.ecr.<region>.amazonaws.com/<repository_name>:<tag>
 
 例如：
-067240665187.dkr.ecr.us-east-1.amazonaws.com/v1-ti-grafana:11.6.14
+123456789012.dkr.ecr.us-east-1.amazonaws.com/my-grafana:11.6.14
 │              │               │              │               │
 account_id   region           domain      repo name        tag
 ```
@@ -55,13 +55,13 @@ account_id   region           domain      repo name        tag
 ```bash
 # 建立單一 repository
 aws ecr create-repository \
-  --repository-name v1-ti-grafana \
+  --repository-name my-grafana \
   --region us-east-1 \
   --image-tag-mutability MUTABLE \
   --image-scanning-configuration scanOnPush=false
 
 # 批次建立多個
-for repo in v1-ti-grafana v1-ti-vminsert v1-ti-vmselect v1-ti-vmstorage; do
+for repo in my-grafana my-vminsert my-vmselect my-vmstorage; do
   aws ecr create-repository \
     --repository-name $repo \
     --region us-east-1 \
@@ -83,10 +83,10 @@ aws ecr get-login-password --region <region> \
   | docker login --username AWS --password-stdin \
     <account_id>.dkr.ecr.<region>.amazonaws.com
 
-# 實際例子（STG us-east-1）
+# 實際例子（us-east-1）
 aws ecr get-login-password --region us-east-1 \
   | docker login --username AWS --password-stdin \
-    067240665187.dkr.ecr.us-east-1.amazonaws.com
+    123456789012.dkr.ecr.us-east-1.amazonaws.com
 
 # Login token 有效期：12 小時
 # 過期後需要重新執行上面的指令
@@ -95,24 +95,24 @@ aws ecr get-login-password --region us-east-1 \
 ### 3. Push Image
 
 ```bash
-ECR="067240665187.dkr.ecr.us-east-1.amazonaws.com"
+ECR="123456789012.dkr.ecr.us-east-1.amazonaws.com"
 
 # Step 1: Build（或從其他地方 pull）
-docker build -t v1-ti-grafana:11.6.14 .
+docker build -t my-grafana:11.6.14 .
 
 # Step 2: Tag（加上 ECR 完整 URI）
-docker tag v1-ti-grafana:11.6.14 $ECR/v1-ti-grafana:11.6.14
+docker tag my-grafana:11.6.14 $ECR/my-grafana:11.6.14
 
 # Step 3: Push
-docker push $ECR/v1-ti-grafana:11.6.14
+docker push $ECR/my-grafana:11.6.14
 ```
 
 ### 4. Pull Image
 
 ```bash
-ECR="067240665187.dkr.ecr.us-east-1.amazonaws.com"
+ECR="123456789012.dkr.ecr.us-east-1.amazonaws.com"
 
-docker pull $ECR/v1-ti-grafana:11.6.14
+docker pull $ECR/my-grafana:11.6.14
 ```
 
 ### 5. 查看 Repository 內的 images
@@ -120,7 +120,7 @@ docker pull $ECR/v1-ti-grafana:11.6.14
 ```bash
 # 列出所有 tags
 aws ecr list-images \
-  --repository-name v1-ti-grafana \
+  --repository-name my-grafana \
   --region us-east-1 \
   --query "imageIds[*].imageTag" \
   --output table
@@ -138,11 +138,11 @@ aws ecr describe-repositories \
 
 ### Retag + Push（從一個 ECR 推到另一個）
 
-最常見的情境：把 STG 的 image 推到 PROD，或從 us-west-2 推到 us-east-1。
+最常見的情境：把來源環境的 image 推到目標環境，或跨 Region 同步。
 
 ```bash
-SRC_ECR="485578296928.dkr.ecr.us-west-2.amazonaws.com"   # 來源（INT）
-DST_ECR="067240665187.dkr.ecr.us-east-1.amazonaws.com"   # 目標（STG）
+SRC_ECR="987654321098.dkr.ecr.us-west-2.amazonaws.com"   # 來源環境
+DST_ECR="123456789012.dkr.ecr.us-east-1.amazonaws.com"   # 目標環境
 
 # Step 1: Login 兩個 ECR（如果 image 不在本機）
 aws ecr get-login-password --region us-west-2 \
@@ -152,13 +152,13 @@ aws ecr get-login-password --region us-east-1 \
   | docker login --username AWS --password-stdin $DST_ECR
 
 # Step 2: Pull from source（如果本機已有就跳過）
-docker pull $SRC_ECR/v1-ti-grafana:11.6.14
+docker pull $SRC_ECR/my-grafana:11.6.14
 
 # Step 3: Retag
-docker tag $SRC_ECR/v1-ti-grafana:11.6.14 $DST_ECR/v1-ti-grafana:11.6.14
+docker tag $SRC_ECR/my-grafana:11.6.14 $DST_ECR/my-grafana:11.6.14
 
 # Step 4: Push to destination
-docker push $DST_ECR/v1-ti-grafana:11.6.14
+docker push $DST_ECR/my-grafana:11.6.14
 ```
 
 > **注意：** 本機已有 image 時不需要 pull，直接 retag 就好。
@@ -167,8 +167,8 @@ docker push $DST_ECR/v1-ti-grafana:11.6.14
 ### 批次 Retag + Push
 
 ```bash
-SRC_ECR="485578296928.dkr.ecr.us-west-2.amazonaws.com"
-DST_ECR="067240665187.dkr.ecr.us-east-1.amazonaws.com"
+SRC_ECR="987654321098.dkr.ecr.us-west-2.amazonaws.com"
+DST_ECR="123456789012.dkr.ecr.us-east-1.amazonaws.com"
 
 # Login destination
 aws ecr get-login-password --region us-east-1 \
@@ -176,13 +176,13 @@ aws ecr get-login-password --region us-east-1 \
 
 # Retag and push all
 for img in \
-  "v1-ti-grafana:11.6.14" \
-  "v1-ti-vm-operator:0.68.4-test" \
-  "v1-ti-vmstorage:1.140.0-cluster-test" \
-  "v1-ti-vmselect:1.140.0-cluster-test" \
-  "v1-ti-vminsert:1.140.0-cluster-test" \
-  "v1-ti-vmauth:1.140.0-test" \
-  "v1-ti-vmalert:1.140.0-test"; do
+  "my-grafana:11.6.14" \
+  "my-vm-operator:0.68.4-test" \
+  "my-vmstorage:1.140.0-cluster-test" \
+  "my-vmselect:1.140.0-cluster-test" \
+  "my-vminsert:1.140.0-cluster-test" \
+  "my-vmauth:1.140.0-test" \
+  "my-vmalert:1.140.0-test"; do
     docker tag $SRC_ECR/$img $DST_ECR/$img
     docker push $DST_ECR/$img
     echo "Pushed: $img"

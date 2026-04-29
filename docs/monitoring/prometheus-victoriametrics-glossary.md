@@ -95,7 +95,7 @@ topk(10, sum by (pod) (
 | 名詞 | 一句話 |
 |---|---|
 | **remote_write** | Prometheus 把 metrics 推到遠端儲存的標準 API |
-| **external_labels** | 加在所有 metrics 上的固定 label，如 `{region="int", cluster="eks-int"}` |
+| **external_labels** | 加在所有 metrics 上的固定 label，如 `{region="us-east-1", cluster="eks-central"}` |
 | **WAL** | Write-Ahead Log，Prometheus 本地 buffer，最多保留 ~2 小時 |
 | **batch_send_deadline** | 最多等多久才 flush 一批資料（預設 5 秒） |
 | **remote_write lag** | VM 的資料比 Prometheus 落後多少秒 |
