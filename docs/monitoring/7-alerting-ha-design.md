@@ -140,17 +140,6 @@ inhibit_rules:
     equal: ['region']
 ```
 
-**類比（Python）：**
-```python
-# inhibit_rules 就像 exception hierarchy
-try:
-    main_operation()
-except CriticalStorageError as e:
-    # 只處理根本原因，不要把 downstream error 全部 raise
-    handle_critical(e)
-    # suppress DownstreamWarning, AppErrorRate, etc.
-```
-
 ### 多 Region inhibit 範例
 
 ```yaml

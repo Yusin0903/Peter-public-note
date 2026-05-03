@@ -41,7 +41,6 @@ Prometheus ──remote_write──▶ vminsert-0
               vmstorage-0    vmstorage-1    vmstorage-2
 ```
 
-**類比（Python）：** 像一個 load balancer + sharding router。收到 request 後根據 `hash(metric_key) % n_nodes` 決定往哪個 storage 寫。自己不存任何資料。
 
 ### vmstorage（儲存層，stateful）
 
@@ -64,7 +63,6 @@ vmstorage-0:   EBS gp3 (/vm-data/)
 - node-0 掛掉：資料在 node-1 和 node-2，查詢正常
 - node-0 和 node-1 同時掛掉：只剩 node-2，資料不完整（但不會全失）
 
-**類比：** 像 Python dict 存資料，但同時寫 2 份到不同的磁碟。`replication_factor = 2`。
 
 ### vmselect（查詢層，stateless）
 
@@ -206,7 +204,6 @@ VMAgent 的職責：**scrape targets，把資料用 remote_write 推到中央 VM
            vmauth ──▶ vminsert ──▶ vmstorage
 ```
 
-類比：VMAgent 就像 Python 的 `logging.handlers.MemoryHandler`，平常把 log 累積在 queue，達到一定量或間隔就 flush 給遠端；中央 VMCluster 是接收端的 server。
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # Prometheus & VictoriaMetrics 核心名詞
@@ -165,4 +165,75 @@ Grafana（視覺化）
 固定 UID（例如 victoriametrics-ds）：
   dashboard 搬到任何環境都能直接用
   → 不需要手動修改
+```
+
+---
+
+## Prometheus + VictoriaMetrics 如何分工合作
+
+我們選擇 **Prometheus 負責 scrape，VictoriaMetrics 負責儲存與查詢**。
+
+### 為什麼這樣分
+
+| 職責 | 選擇 | 原因 |
+|---|---|---|
+| Scrape（拉 metrics）| Prometheus | 最成熟的 service discovery、scrape config 生態 |
+| 長期儲存 | VictoriaMetrics | RAM 效率比 Prometheus TSDB 高 7-10x，不需要 S3 |
+| 查詢 | VictoriaMetrics（vmselect）| 支援 MetricsQL，multi-region 合併查詢 |
+
+Prometheus 本地只保留 WAL buffer（約 2 小時），**真正的儲存在 VM**。
+
+### 資料流
+
+```
+各 Region Target（Pod / Node）
+    │
+    │  15s scrape（pull-based）
+    ▼
+Prometheus
+    │
+    │  remote_write（HTTPS batch push）
+    ▼
+vmauth（TLS termination + bearer token 驗證）
+    │
+    ▼
+vminsert（接收，consistent hash 分片）
+    │
+    ▼
+vmstorage × 3（持久化，replicationFactor=2）
+    ▲
+    │  fan-out query
+vmselect
+    ▲
+    │  PromQL / MetricsQL
+Grafana
+```
+
+### 關鍵設定：prometheus.yml 的 remote_write
+
+```yaml
+remote_write:
+  - url: https://vmauth.monitoring.svc:8427/insert/0/prometheus/api/v1/write
+    bearer_token: "<region token>"
+    queue_config:
+      max_samples_per_send: 10000
+      batch_send_deadline: 5s
+      max_shards: 10
+    tls_config:
+      insecure_skip_verify: false
+```
+
+Prometheus 把 scrape 到的 samples 批次推送到 vmauth，vmauth 驗證 token 後轉發給 vminsert。
+
+### Prometheus 本地保留什麼
+
+```
+Prometheus 本地：
+  WAL（Write-Ahead Log）— 最近 ~2 小時的資料
+  └── 用途：remote_write 失敗時的 retry buffer
+  └── 網路斷線恢復後自動補傳，不丟資料
+
+VictoriaMetrics：
+  所有歷史資料（retentionPeriod: 90d）
+  └── Grafana 查詢直接打 vmselect，不打 Prometheus
 ```

@@ -6,7 +6,8 @@ sidebar_position: 1
 
 各主題已拆分到獨立頁面，請直接查閱：
 
-- **[AWS 基礎服務名詞](./self-managed-vs-fully-managed)** — EKS、EC2、EBS、ALB、ECR、IAM、S3 等
+- **[AWS Managed Service 型態](./self-managed-vs-fully-managed)** — Self-managed、Semi-managed、Fully managed 三種層次比較
+- **[AWS 基礎服務名詞](./aws-services-glossary)** — EKS、EC2、EBS、ALB、ECR、IAM、S3 等
 - **[VPC 網路完整指南](./nat-gateway-vs-transit-gateway)** — VPC、NAT Gateway、VPC Endpoint、Transit Gateway、Route53 PHZ
 - **[Route53 DNS 服務](./route53-guide)** — Hosted Zone、Alias vs CNAME、PHZ 跨 VPC、Terraform 範例
 - **[ACM 憑證管理](./acm-guide)** — TLS 憑證、Domain Validation、ALB 搭配、Public vs Private

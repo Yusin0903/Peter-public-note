@@ -174,9 +174,11 @@ def upgrade() -> None:
             sa.text("""
                 UPDATE inference_results
                 SET score_normalized = score / 100.0
-                WHERE score_normalized IS NULL
-                LIMIT :batch_size
-                RETURNING id
+                WHERE id IN (
+                    SELECT id FROM inference_results
+                    WHERE score_normalized IS NULL
+                    LIMIT :batch_size
+                )
             """),
             {"batch_size": batch_size}
         )

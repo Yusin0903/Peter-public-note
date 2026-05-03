@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 5
 ---
 
 # Ingress & Service
@@ -24,8 +24,6 @@ sidebar_position: 2
 │   Pod    │  實際跑程式的容器
 └──────────┘
 ```
-
-> **Python 類比**：就像 FastAPI 的 router 架構 — Ingress 是 `app.include_router()` 的路由表，Service 是 `APIRouter`，Pod 是實際的 handler function。
 
 ---
 
@@ -62,24 +60,12 @@ sidebar_position: 2
 | **NodePort** | 每個 Node 開固定 port（30000-32767） | 搭配 ALB 等外部 LB |
 | **LoadBalancer** | 自動建雲端 LB | 正式對外服務 |
 
-> **Python 類比**：
-> - `ClusterIP` = `localhost:8000`，只有自己電腦能連
-> - `NodePort` = 把 port 綁到固定號碼對外開放，像 `uvicorn --port 30080`
-> - `LoadBalancer` = 前面有 nginx 幫你做反向代理，自動分流
-
 ### port vs targetPort
 
 ```yaml
 ports:
   - port: 80          # Service 對外暴露的 port（cluster 內用這個）
     targetPort: 8081   # Pod 實際 listen 的 port（= containerPort）
-```
-
-```python
-# Python 類比：
-# port=80 是外部打進來的端口
-# targetPort=8081 是 uvicorn 實際 bind 的端口
-# 就像 nginx proxy_pass http://127.0.0.1:8081 但對外開 80
 ```
 
 ### 內部 DNS 解析
@@ -95,16 +81,6 @@ curl http://my-service.other-namespace:80
 
 # 完整 FQDN（較少用，但最明確）
 curl http://my-service.other-namespace.svc.cluster.local:80
-```
-
-```python
-# Python 類比：就像 /etc/hosts 裡面幫你加了一行
-# my-service  10.96.0.1
-# httpx.get("http://my-service:80/health") 就能直接通
-
-import httpx
-# 在 K8s Pod 裡，這樣就能連到同 namespace 的另一個服務
-response = httpx.get("http://inference-service:8081/predict")
 ```
 
 ---
@@ -228,26 +204,6 @@ Model 掛掉（deadlock / OOM）：
   Liveness  = DEAD      → K8s 重啟 Pod ✓
 ```
 
-> **Python 類比**：
-> ```python
-> # Readiness = 你的 FastAPI startup event 還沒跑完
-> @app.on_event("startup")
-> async def load_model():
->     app.state.model = load_big_model()  # 這段跑完前 readiness = False
->     app.state.ready = True
->
-> @app.get("/health/ready")
-> async def readiness():
->     if not app.state.ready:
->         raise HTTPException(503)  # 還沒 ready
->     return {"status": "ready"}
->
-> # Liveness = 心跳檢測，確認程式沒卡死
-> @app.get("/health/live")
-> async def liveness():
->     return {"status": "alive"}  # 只要程式能回應就好
-> ```
-
 ### 完整 Probe 設定範例（推理服務）
 
 ```yaml
@@ -300,16 +256,6 @@ resources:
     cpu: "4"           # 最多用到 4 顆 CPU（可以 burst）
     memory: "16Gi"     # 超過 16GB 就被 OOMKilled
 ```
-
-> **Python 類比**：
-> ```python
-> # requests = 你跟 AWS 說「我的 EC2 至少要 8GB RAM」→ 排機器用
-> # limits   = 你設了 ulimit，超過就被 kill
->
-> import resource
-> # 類似 limits.memory
-> resource.setrlimit(resource.RLIMIT_AS, (16 * 1024**3, 16 * 1024**3))
-> ```
 
 ### GPU 設定（inference system 必看）
 
@@ -370,21 +316,6 @@ spec:
           type: Utilization
           averageUtilization: 70  # CPU 平均超過 70% 就 scale out
 ```
-
-> **Python 類比**：
-> ```python
-> # HPA 就像自動調整 Celery worker 數量
-> from celery.signals import worker_ready
->
-> # 手動版 HPA 概念：
-> current_workers = len(celery_app.control.inspect().active())
-> queue_depth = redis.llen("celery")
->
-> if queue_depth / current_workers > 10:  # 每個 worker 超過 10 個 task
->     scale_out(workers=current_workers + 2)
-> elif queue_depth / current_workers < 2:
->     scale_in(workers=max(2, current_workers - 1))
-> ```
 
 ### 注意事項
 

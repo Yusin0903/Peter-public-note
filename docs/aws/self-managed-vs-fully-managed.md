@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# 自己管 vs 半托管 vs 全託管
+# AWS Managed Service 型態
 
 ## 三個層次的對比
 

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 10
 ---
 
 # Docker 常用指令與注意事項
@@ -23,17 +23,6 @@ docker system prune -a --volumes
 ## Multi-stage Build — Python inference image 瘦身
 
 Python inference image 最大的問題：build 工具（gcc、cmake、build-essential）和 dev dependency 被打包進去，image 動輒 10GB+。Multi-stage build 讓你用一個大 image 編譯，再把成品複製到小 image 裡。
-
-> **Python 類比**：
-> ```python
-> # Multi-stage build 就像 Python 的 __all__ 控制 export
-> # build stage = 整個 module（包含 private function、測試、dev tool）
-> # final stage = 只 export 使用者需要的部分
->
-> # 或者更直白的比喻：
-> # build stage = 廚房（有所有工具和食材）
-> # final stage = 上菜的盤子（只有最終料理，沒有鍋碗瓢盆）
-> ```
 
 ### 基本 Python inference Dockerfile
 
@@ -262,21 +251,6 @@ docker-compose*.yml
 *.tmp
 tmp/
 ```
-
-> **Python 類比**：
-> ```python
-> # .dockerignore = setup.py 的 MANIFEST.in 或 .gitignore
-> # 定義「哪些檔案不要包含在 build context 裡」
->
-> # 就像你 publish pip package 時不想包含 tests/ 和 .env
-> # MANIFEST.in:
-> # exclude tests/*
-> # exclude .env
->
-> # 影響：沒有 .dockerignore 的話
-> # docker build 把 5GB 的 model weights 送進 build context
-> # 每次 build 都要等 5 分鐘上傳，即使 COPY 指令不包含 weights
-> ```
 
 **為什麼 .dockerignore 對 inference 特別重要**：
 - model weights 動輒幾 GB，不應該打包進 image（從 S3 或 model registry 下載）

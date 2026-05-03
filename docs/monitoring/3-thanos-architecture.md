@@ -41,7 +41,6 @@ Prometheus Pod:
 - 定期把 Prometheus 完成的 TSDB block（2 小時為一個 block）上傳到 S3
 - 充當「最近 2 小時資料」的查詢端點（直接從 Prometheus TSDB 讀）
 
-**類比（Python）：** 像一個 file watcher，監控 Prometheus 的資料目錄，每次有完整的 block 就 `upload_to_s3(block)`，同時開一個 gRPC server 讓別人可以 `fetch_recent_data()`。
 
 ### Thanos Query
 
@@ -62,7 +61,6 @@ Thanos Query:
       合併結果後回傳給 Grafana
 ```
 
-**類比：** 像 Python 的 `asyncio.gather()` — 對多個 data source 同時發請求，等全部回來再合併。
 
 ### Thanos Store Gateway
 

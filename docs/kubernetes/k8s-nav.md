@@ -1,8 +1,8 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
-# K8s 名詞導覽
+# K8s 筆記導覽
 
 各主題已拆分到獨立頁面，請直接查閱：
 

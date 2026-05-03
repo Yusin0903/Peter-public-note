@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 9
 ---
 
 # K8s 可觀測性：Log、Debug & 服務選型
@@ -26,16 +26,6 @@ kubectl logs <pod-name> --tail=100
 kubectl logs <pod-name> --since=1h
 kubectl logs <pod-name> --since-time="2024-01-15T10:00:00Z"
 ```
-
-> **Python 類比**：
-> ```python
-> # kubectl logs -f <pod>  等同於
-> import subprocess
-> subprocess.run(["tail", "-f", "/var/log/app.log"])
->
-> # kubectl logs -l app=my-app  等同於同時 tail 所有 worker 的 log
-> # 就像你跑多個 gunicorn worker 想同時看所有 process 的 stdout
-> ```
 
 多 replica 時每個 Pod 只有部分流量的 log，要查特定 request 建議用集中式 log（如 CloudWatch Logs Insights、Loki）或 trace ID。
 
@@ -104,18 +94,6 @@ Events:                        ← 最重要的 debug 資訊在這裡
   Warning  OOMKilled  15m  kubelet   Container was OOMKilled
 ```
 
-> **Python 類比**：
-> ```python
-> # kubectl describe pod 就像 Python 的 traceback + process info
-> import traceback
-> import psutil
->
-> proc = psutil.Process()
-> print(f"Memory: {proc.memory_info().rss / 1024**3:.1f} GB")
-> print(f"Status: {proc.status()}")
-> # 相當於 kubectl describe 的 State + Resources 部分
-> ```
-
 ---
 
 ## kubectl exec — 進入 Pod 內部
@@ -153,14 +131,6 @@ print(f"GPU memory reserved: {torch.cuda.memory_reserved()/1024**3:.1f} GB")
 # "
 ```
 
-> **Python 類比**：
-> ```python
-> # kubectl exec -it <pod> -- bash
-> # 就像 SSH 進到你的 EC2 instance，或是 Docker 的 docker exec -it
-> import subprocess
-> subprocess.run(["docker", "exec", "-it", "container_id", "/bin/bash"])
-> ```
-
 ---
 
 ## kubectl top — 查看資源使用量
@@ -185,17 +155,6 @@ batch-job-1234-abcde                4000m        20Gi   ← 可能快 OOMKilled
 ```
 
 **注意**：`kubectl top` 需要 cluster 安裝了 metrics-server。EKS 預設沒有，需要另外安裝。
-
-> **Python 類比**：
-> ```python
-> # kubectl top pods ≈ psutil 查所有 process 的資源使用
-> import psutil
->
-> for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
->     print(f"{proc.info['name']}: "
->           f"CPU={proc.info['cpu_percent']}% "
->           f"MEM={proc.info['memory_info'].rss / 1024**3:.1f}GB")
-> ```
 
 ---
 
@@ -270,20 +229,6 @@ Step 4: kubectl exec -it <pod-name> -- /bin/bash
      或：kubectl run debug --image=your-image -it --rm -- /bin/bash
 ```
 
-> **Python 類比**：
-> ```python
-> # CrashLoopBackOff 診斷就像 debug 一個一直重啟的 supervisor 程式
->
-> # Step 1: 看 crash 前的 log（--previous 等同於看 supervisor 的 stderr log）
-> # tail -f /var/log/supervisor/inference-server-stderr.log
->
-> # Step 2: 用 strace 或 py-spy 看程式卡在哪
-> # py-spy dump --pid <PID>
->
-> # Step 3: 直接跑程式看完整 traceback
-> # python -c "from your_app import app; app.startup()"
-> ```
-
 ### 常見 CrashLoopBackOff 原因（inference system）
 
 | 原因 | 症狀 | 解法 |
@@ -305,20 +250,6 @@ Step 4: kubectl exec -it <pod-name> -- /bin/bash
 | 適合 | 長時間服務、複雜架構 | 短任務（≤15 min）、事件驅動 |
 | 費用 | Node 開著就收錢 | 只收執行時間 |
 | 管理成本 | 要管 node、scaling、部署 | 幾乎不用管 |
-
-```python
-# Python 類比：
-
-# EKS = 你自己跑 FastAPI server，24hr 在線
-# uvicorn app:app --host 0.0.0.0 --port 8080
-# → 機器一直開著，不管有沒有 request 都在燒錢
-
-# Lambda = Python function，呼叫才跑，跑完就消失
-def lambda_handler(event, context):
-    result = model.predict(event["input"])
-    return {"prediction": result}
-# → 沒有 request 不收費，但 cold start 要等幾秒
-```
 
 ### 選擇原則
 

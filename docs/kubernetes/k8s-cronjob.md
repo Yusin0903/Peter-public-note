@@ -1,22 +1,10 @@
 ---
-sidebar_position: 5
+sidebar_position: 8
 ---
 
 # CronJob
 
 K8s 的 CronJob 就是 crontab 的 K8s 版本，定時觸發一個 Job（跑完就停的容器）。
-
-> **Python 類比**：就像用 `APScheduler` 或 `crontab` 定時執行 Python script，但在 K8s cluster 裡執行、有 retry 機制、有歷史紀錄。
-
-```python
-# 你以前可能這樣做：
-# crontab: "10 */1 * * *  python /app/cleanup.py"
-
-# K8s CronJob 等價：
-# schedule: "10 */1 * * *"  → 每小時第 10 分鐘
-# backoffLimit: 3            → 失敗最多重試 3 次（像 tenacity retry）
-# concurrencyPolicy: Forbid  → 上一個還沒跑完就不啟動新的
-```
 
 ---
 
@@ -40,19 +28,6 @@ backoffLimit: 3                 # 失敗最多重試 3 次
 | `Allow` | 允許同時多個 Job 並發（預設） |
 | `Replace` | 殺掉上一次，啟動新的 |
 
-```python
-# Python 類比：
-
-# Forbid = threading.Lock() 搶不到就放棄
-import threading
-lock = threading.Lock()
-if not lock.acquire(blocking=False):
-    print("上次還沒跑完，跳過這次")
-
-# Allow = 不管 lock，每次都開新 thread
-# Replace = 先 cancel 舊 task，再開新的（像 asyncio.Task.cancel()）
-```
-
 **inference system 建議**：batch inference 用 `Forbid`，避免兩個 job 同時讀同一批資料造成重複處理。
 
 ---
@@ -75,23 +50,6 @@ Job 啟動
   └── 超過 3600s → K8s 強制終止 Pod + 標記 Job 為失敗
                    （不管 backoffLimit，直接死）
 ```
-
-> **Python 類比**：
-> ```python
-> import signal
->
-> def timeout_handler(signum, frame):
->     raise TimeoutError("Job exceeded deadline")
->
-> # activeDeadlineSeconds = 3600 等同於：
-> signal.signal(signal.SIGALRM, timeout_handler)
-> signal.alarm(3600)  # 3600 秒後強制中斷
->
-> try:
->     run_batch_inference()  # 正常跑
-> except TimeoutError:
->     cleanup()              # K8s 會送 SIGTERM，給你清理的機會
-> ```
 
 **重要**：`activeDeadlineSeconds` 是整個 Job 的 deadline（包含重試時間），不是單次 Pod 的 timeout。如果你設 `activeDeadlineSeconds: 3600` 且 `backoffLimit: 3`，三次重試加起來超過 3600s 就整個 Job 終止。
 
@@ -117,24 +75,6 @@ spec:
               memory: "16Gi"
               nvidia.com/gpu: "1"   # GPU limits 必須 = requests
 ```
-
-> **Python 類比**：
-> ```python
-> # 就像設 ulimit 防止 runaway process
-> import resource
->
-> # limits.memory = 16Gi
-> resource.setrlimit(resource.RLIMIT_AS, (16 * 1024**3, 16 * 1024**3))
->
-> # 或用 subprocess 的 preexec_fn 限制子 process 資源
-> import subprocess
-> subprocess.run(
->     ["python", "batch_inference.py"],
->     preexec_fn=lambda: resource.setrlimit(
->         resource.RLIMIT_AS, (16 * 1024**3, 16 * 1024**3)
->     )
-> )
-> ```
 
 ---
 

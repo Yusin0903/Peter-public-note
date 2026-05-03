@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 7
 ---
 
 # K8s 部署工具比較 & Terraform 定位
@@ -101,27 +101,6 @@ YAML
 ## Helm values.yaml 多環境管理
 
 Helm 的核心思想：**一份 chart template + 不同環境的 values.yaml**。
-
-> **Python 類比**：
-> ```python
-> # Helm chart = 帶參數的 Python 函數（template）
-> # values.yaml = 呼叫函數時傳入的參數
->
-> def deploy_inference_server(
->     image_tag: str,
->     replicas: int,
->     gpu_count: int,
->     memory_limit: str,
-> ):
->     # chart template 裡的邏輯
->     ...
->
-> # staging
-> deploy_inference_server(image_tag="v1.2.0", replicas=1, gpu_count=1, memory_limit="16Gi")
->
-> # production
-> deploy_inference_server(image_tag="v1.2.0", replicas=3, gpu_count=2, memory_limit="32Gi")
-> ```
 
 ### 目錄結構
 
@@ -246,24 +225,6 @@ helm upgrade --install inference-server ./my-inference-chart \
 ## Kustomize — YAML overlay 不用 template
 
 Kustomize 的思想：**保留原始 YAML，用 overlay 疊加差異**。不用 template 語法，純 YAML。
-
-> **Python 類比**：
-> ```python
-> # Kustomize = dict merge / dataclass override
-> base_config = {
->     "replicas": 1,
->     "image": "my-server:latest",
->     "memory": "8Gi",
-> }
->
-> # staging overlay
-> staging_override = {"memory": "4Gi"}
-> staging_config = {**base_config, **staging_override}
->
-> # production overlay
-> prod_override = {"replicas": 3, "memory": "32Gi"}
-> prod_config = {**base_config, **prod_override}
-> ```
 
 ### 目錄結構
 
@@ -436,28 +397,6 @@ GitOps 流程：
 │  Status: Synced ✓                                   │
 └─────────────────────────────────────────────────────┘
 ```
-
-> **Python 類比**：
-> ```python
-> # ArgoCD = 持續比較「你要的狀態」vs「現在的狀態」並自動修正
-> # 就像 Python dataclass 的 __post_init__ 驗證，但是持續運行的
->
-> import time
->
-> def argocd_reconcile_loop():
->     while True:
->         desired = git.get_manifests("main")       # git 裡的期望狀態
->         current = k8s.get_current_state()         # cluster 現在的狀態
->
->         diff = compare(desired, current)
->         if diff:
->             print(f"Out of sync: {diff}")
->             k8s.apply(desired)                    # 同步
->         else:
->             print("Synced ✓")
->
->         time.sleep(180)   # 每 3 分鐘檢查一次（或用 webhook）
-> ```
 
 ### ArgoCD Application 設定
 
