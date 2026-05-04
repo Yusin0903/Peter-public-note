@@ -14,8 +14,13 @@ const config = {
   projectName: 'Peter-public-note',
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
   trailingSlash: false,
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   i18n: {
     defaultLocale: 'zh-TW',
@@ -30,6 +35,7 @@ const config = {
         label: 'English',
         direction: 'ltr',
         htmlLang: 'en-US',
+        path: 'en',
       },
     },
   },

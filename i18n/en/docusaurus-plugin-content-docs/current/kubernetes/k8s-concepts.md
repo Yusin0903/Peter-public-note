@@ -46,4 +46,4 @@ Workload types for an inference system:
 
 ## Quick Reference
 
-For detailed K8s & AWS glossary see [K8s & AWS Glossary](./k8s-and-aws-glossary).
+For detailed K8s glossary see [K8s Glossary](./k8s-glossary).

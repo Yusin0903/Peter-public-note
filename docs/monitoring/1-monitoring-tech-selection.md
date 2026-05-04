@@ -96,7 +96,7 @@ Federation 中央只有：
 
 ## 方案 C：Thanos ❌
 
-詳細分析見 [Thanos vs VictoriaMetrics 比較](./2-thanos-vs-victoriametrics)。
+詳細分析見 [Thanos vs VictoriaMetrics 比較](./thanos-vs-victoriametrics)。
 
 簡言之：
 - Sidecar 模式需修改 10 個 Region 的 K8s manifest，與零中斷遷移策略衝突

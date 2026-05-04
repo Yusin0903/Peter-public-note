@@ -44,7 +44,7 @@ const sidebars = {
         'kubernetes/k8s-storage',
         'kubernetes/k8s-cronjob',
         'kubernetes/k8s-observability',
-        'kubernetes/k8s-and-aws-glossary',
+        'kubernetes/k8s-glossary',
         'kubernetes/k8s-deployment-tools',
         'kubernetes/docker-tips',
       ],
@@ -54,8 +54,6 @@ const sidebars = {
       label: 'Monitoring',
       items: [
         'monitoring/prometheus-glossary',
-        'monitoring/glossary-and-data-definitions',
-        'monitoring/monitoring-stack-decision',
         'monitoring/monitoring-tech-selection',
         'monitoring/thanos-vs-victoriametrics',
         'monitoring/thanos-architecture',
