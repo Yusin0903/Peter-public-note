@@ -246,3 +246,129 @@ Throughput = 每秒搬多少資料量（MiB/s）
 gp3 幾乎在所有場景都比 gp2 好。AWS 官方建議新 workload 用 gp3。
 
 **gp2 的痛點**：想要 3000 IOPS 就必須開 1000GiB 的 volume（浪費空間和錢）。gp3 不管多小的 volume 都直接給 3000 IOPS。
+
+---
+
+## PV / PVC 實戰陷阱（踩雷整理）
+
+### 1. PV 跟 EBS 是「鬆耦合」
+
+```
+K8s 端                  AWS 端
+─────────────────       ─────────────────
+PV (metadata only)  →   EBS volume (vol-xxx)
+   ↑                       ↑
+   csi.volumeHandle 指向    實際資料在這
+```
+
+- 砍 PV `kubectl delete pv` **只刪 K8s metadata**
+- EBS 是不是跟著死，看 PV `reclaimPolicy`（不是看砍 PV 的動作）
+- `Retain` → EBS 保留、變成 K8s 看不到的孤兒，要手動 `aws ec2 delete-volume`
+- `Delete` → EBS 跟著一起刪
+
+→ 想保資料：**先確認 reclaimPolicy=Retain**，再砍 PV 也不會丟。
+
+### 2. PVC 卡 Terminating，多半是有 Pod 還在用
+
+```bash
+kubectl delete pvc xxx
+# 卡住不動
+```
+
+K8s 不允許砍還被 Pod mount 的 PVC（finalizer 擋）。解法：
+
+```bash
+# 1. 先砍用它的 Pod / StatefulSet / Deployment
+helm uninstall <release>
+# 或
+kubectl delete sts <name>
+
+# 2. 等個幾秒，原來的 delete pvc 自動 unblock
+```
+
+不要用 `--force` 直接強拆 finalizer——容易留 ghost 資源。
+
+### 3. EBS 是 AZ 級別，不能跨 AZ
+
+```
+us-east-1a 的 EBS  ✗→  us-east-1b 的 node  →  InvalidVolume.ZoneMismatch
+```
+
+`volumeBindingMode: WaitForFirstConsumer` 只能解決「**動態 provision 時**」的對齊。**手動建 PV 接舊 EBS 時 scheduler 不知道 EBS 在哪 AZ**，要在 PV spec 顯式寫 nodeAffinity：
+
+```yaml
+spec:
+  csi:
+    volumeHandle: vol-018b913a6d45ef78c   # us-east-1c 的 EBS
+  nodeAffinity:                            # 必加！
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: topology.kubernetes.io/zone
+              operator: In
+              values:
+                - us-east-1c               # 限定 Pod 排到同 AZ
+```
+
+沒這段 → scheduler 隨便找 node → attach 失敗 → Pod 卡 ContainerCreating。
+
+### 4. claimRef 預先綁定（保資料的關鍵技巧）
+
+要把舊 EBS 接到新 chart 建的 PVC（PVC 名字變了），**手動建 PV 時直接寫死 claimRef**：
+
+```yaml
+spec:
+  csi:
+    volumeHandle: vol-018b...      # 舊 EBS
+  claimRef:                         # 預先指定要被誰 claim
+    namespace: monitoring
+    name: vmstorage-volume-vm-cluster-vmstorage-0   # chart 即將建的 PVC name
+```
+
+之後 chart 建 PVC 時，K8s 看到 PV 已 claim 給這個 name → 直接 Bound。**不用 import、不用 patch**。
+
+### 5. RWO + Deployment + replicaCount > 1 = 必炸
+
+```
+Multi-Attach error for volume "pvc-xxx"
+Volume is already used by pod(s) ...
+```
+
+RWO（ReadWriteOnce）規則：**同時只能掛到一個 node**。
+
+| Workload | replicas | RWO PVC OK 嗎 |
+|---|---|---|
+| Deployment | 1 | ✅ |
+| Deployment | 2+ | ❌ Multi-Attach |
+| StatefulSet | 1+ | ✅（每 replica 自己 PVC，靠 `volumeClaimTemplates`）|
+
+**Helm chart 裡常見陷阱**：很多 chart 把 vmselect / Grafana 之類的元件做成 Deployment，但 values 又有 `persistentVolume.enabled: true`——預設能跑（1 replica），scale 到 2 就炸。
+
+→ 多 replica 的 Deployment 想要 cache 持久化只有兩條路：
+- `accessModes: ReadWriteMany`（要 EFS / FSx，gp3 不支援）
+- 改成 emptyDir，cache 跟 Pod 走（個別 Pod 各自 cache、cache miss 從 source 重抓）
+
+### 6. StatefulSet PVC 命名規則
+
+```
+{volumeClaimTemplate.name}-{statefulset.name}-{ordinal}
+```
+
+例：
+- volumeClaimTemplate name = `vmstorage-volume`
+- StatefulSet name = `vm-cluster-vmstorage`
+- → PVC 名字 = `vmstorage-volume-vm-cluster-vmstorage-0/1/2`
+
+Helm chart `fullnameOverride` 會影響 StatefulSet name → 連帶影響 PVC name。要預先建 PV claimRef、或從舊 chart 接管 PVC，**一定要先 `helm template ... | grep volumeClaimTemplates` 確認真實名字**，不要靠猜。
+
+### 7. 砍 StatefulSet 不會自動砍 PVC
+
+K8s 設計：StatefulSet 死了，PVC 留著，避免誤刪資料。
+
+```bash
+kubectl delete sts xxx     # PVC 留下
+kubectl delete pvc xxx     # 才真的砍 PVC（PV 跟 EBS 看 reclaimPolicy）
+```
+
+→ 想完全清乾淨要兩步走，不要只砍 StatefulSet 就以為清完。
+
