@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-TW" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-monitoring/alert-driven-dashboard-philosophy" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.10.0">
+<title data-rh="true">Alert-Driven Dashboard Philosophy | Peter&#x27;s Tech Notes</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://Yusin0903.github.io/Peter-public-note/monitoring/alert-driven-dashboard-philosophy"><meta data-rh="true" property="og:locale" content="zh_TW"><meta data-rh="true" property="og:locale:alternate" content="en_US"><meta data-rh="true" name="docusaurus_locale" content="zh-TW"><meta data-rh="true" name="docsearch:language" content="zh-TW"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Alert-Driven Dashboard Philosophy | Peter&#x27;s Tech Notes"><meta data-rh="true" name="description" content="對照 Google SRE 的設計理念。Dashboard 不是用來「常駐盯盤」的，而是 alert"><meta data-rh="true" property="og:description" content="對照 Google SRE 的設計理念。Dashboard 不是用來「常駐盯盤」的，而是 alert"><link data-rh="true" rel="icon" href="/Peter-public-note/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://Yusin0903.github.io/Peter-public-note/monitoring/alert-driven-dashboard-philosophy"><link data-rh="true" rel="alternate" href="https://Yusin0903.github.io/Peter-public-note/monitoring/alert-driven-dashboard-philosophy" hreflang="zh-TW"><link data-rh="true" rel="alternate" href="https://Yusin0903.github.io/Peter-public-note/en/monitoring/alert-driven-dashboard-philosophy" hreflang="en-US"><link data-rh="true" rel="alternate" href="https://Yusin0903.github.io/Peter-public-note/monitoring/alert-driven-dashboard-philosophy" hreflang="x-default"><link rel="stylesheet" href="/Peter-public-note/assets/css/styles.e4ad4ebd.css">
+<script src="/Peter-public-note/assets/js/runtime~main.1ae7d5b5.js" defer="defer"></script>
+<script src="/Peter-public-note/assets/js/main.743fa82d.js" defer="defer"></script>
+</head>
+<body>
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳至主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳至主要内容</a></div><nav aria-label="主導航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切換導覽列" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/Peter-public-note/"><b class="navbar__title text--truncate">Peter&#x27;s Tech Notes</b></a><a class="navbar__item navbar__link" href="/Peter-public-note/">Notes</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><div class="navbar__item dropdown dropdown--hoverable dropdown--right"><a href="#" aria-haspopup="true" aria-expanded="false" role="button" class="navbar__link"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" class="iconLanguage_nlXk"><path fill="currentColor" d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>繁體中文</a><ul class="dropdown__menu"><li><a href="/Peter-public-note/monitoring/alert-driven-dashboard-philosophy" target="_self" rel="noopener noreferrer" class="dropdown__link dropdown__link--active" lang="zh-TW">繁體中文</a></li><li><a href="/Peter-public-note/en/monitoring/alert-driven-dashboard-philosophy" target="_self" rel="noopener noreferrer" class="dropdown__link" lang="en-US">English</a></li></ul></div><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切換淺色/深色模式（當前為system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到頂部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><main class="docMainContainer_TBSr docMainContainerEnhanced_lQrH"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本頁導覽</button></div><div class="theme-doc-markdown markdown"><header><h1>Alert-Driven Dashboard Philosophy</h1></header>
+<p>對照 Google SRE 的設計理念。Dashboard 不是用來「常駐盯盤」的，而是 <strong>alert
+觸發後的 triage surface</strong> ——目的是讓 on-call 在 30 秒內找到問題位置與影響範圍。</p>
+<blockquote>
+<p>設計順序：<strong>先 alert → 進 dashboard 看 → 資訊要能立刻找到問題</strong></p>
+</blockquote>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="一設計三原則">一、設計三原則<a href="#一設計三原則" class="hash-link" aria-label="一、設計三原則的直接連結" title="一、設計三原則的直接連結" translate="no">​</a></h2>
+<table><thead><tr><th>原則</th><th>說明</th></tr></thead><tbody><tr><td>1. Alert first</td><td>Dashboard 的入口是 alert，不是「打開來看」。所以 dashboard 第一眼必須回答「在燒嗎？燒在哪？」</td></tr><tr><td>2. Triage on entry</td><td>Alert 進來後第一層必須是紅綠燈式總覽；下一層才是 drill-down</td></tr><tr><td>3. Fast comprehension</td><td>第一層的訊號越少越獨立越好；第二層只在「真的有問題」時呈現資訊</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="二第一層-stat-row-的設計">二、第一層 stat row 的設計<a href="#二第一層-stat-row-的設計" class="hash-link" aria-label="二、第一層 stat row 的設計的直接連結" title="二、第一層 stat row 的設計的直接連結" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="21-訊號必須互相獨立-orthogonal">2.1 訊號必須<strong>互相獨立</strong> (orthogonal)<a href="#21-訊號必須互相獨立-orthogonal" class="hash-link" aria-label="21-訊號必須互相獨立-orthogonal的直接連結" title="21-訊號必須互相獨立-orthogonal的直接連結" translate="no">​</a></h3>
+<p>第一排每個 stat 應該回答<strong>不同類別</strong>的問題。如果兩個 stat 訊號高度相關，
+那其中一個就是 noise，不該佔黃金位置。</p>
+<table><thead><tr><th>問題類別</th><th>Stat</th></tr></thead><tbody><tr><td>服務還在嗎？</td><td>Service Up / Ready Replicas Ratio</td></tr><tr><td>服務在發錯嗎？</td><td>Error Rate (5xx)</td></tr><tr><td>服務慢嗎？</td><td>Latency p95, p99</td></tr><tr><td>有 人用嗎 / 流量正常嗎？</td><td>Traffic vs Baseline (今天 vs 一小時前 / 一週前)</td></tr></tbody></table>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="22-訊號要雙向警報">2.2 訊號要<strong>雙向警報</strong><a href="#22-訊號要雙向警報" class="hash-link" aria-label="22-訊號要雙向警報的直接連結" title="22-訊號要雙向警報的直接連結" translate="no">​</a></h3>
+<p>例如 traffic：</p>
+<ul>
+<li class="">流量太低 → 可能 ingress / DNS / 上游壞了（5xx 抓不到，因為「沒有請求 = 沒錯誤」）</li>
+<li class="">流量太高 → 可能 retry storm / bot / loop bug（latency 抓得到但較慢）</li>
+</ul>
+<p>只看「太高」是 capacity dashboard 的設計，<strong>不是 alert→triage dashboard 的設計</strong>。
+on-call 入口面板寧可保守警報，誤報 1 次比漏看 1 次重要。</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="23-service-up-必須獨立於-5xx--latency">2.3 Service Up 必須<strong>獨立</strong>於 5xx / latency<a href="#23-service-up-必須獨立於-5xx--latency" class="hash-link" aria-label="23-service-up-必須獨立於-5xx--latency的直接連結" title="23-service-up-必須獨立於-5xx--latency的直接連結" translate="no">​</a></h3>
+<p>當服務全 down 時：</p>
+<ul>
+<li class="">Error rate = 0%（沒請求 = 沒錯誤）</li>
+<li class="">Latency = N/A（沒資料）</li>
+<li class=""><strong>只有 Service Up 能告訴你「真的全壞了」</strong></li>
+</ul>
+<p>這個 case 是 alert→triage dashboard 最常被忽略的盲區。</p>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="三第二層的設計沒事就空白">三、第二層的設計：「沒事就空白」<a href="#三第二層的設計沒事就空白" class="hash-link" aria-label="三、第二層的設計：「沒事就空白」的直接連結" title="三、第二層的設計：「沒事就空白」的直接連結" translate="no">​</a></h2>
+<p>第一層回答「在燒嗎」，第二層必須回答「燒在哪」。<strong>第二層的 panel 在沒問題時應該完全空白。</strong></p>
+<table><thead><tr><th>第二層需求</th><th>推薦 panel 類型</th></tr></thead><tbody><tr><td>列出有問題的東西</td><td><strong>Instant table + PromQL <code>&gt; 0</code> 過濾 + cell coloring</strong></td></tr><tr><td>看趨勢、看相關性</td><td>timeseries + <code>topk(N) &gt; 0</code></td></tr><tr><td>摘要紅綠燈</td><td>stat（series 不會多）</td></tr></tbody></table>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="31-為什麼用-instant-table-而不是-stat-panel-列問題">3.1 為什麼用 instant table 而不是 stat panel 列問題？<a href="#31-為什麼用-instant-table-而不是-stat-panel-列問題" class="hash-link" aria-label="3.1 為什麼用 instant table 而不是 stat panel 列問題？的直接連結" title="3.1 為什麼用 instant table 而不是 stat panel 列問題？的直接連結" translate="no">​</a></h3>
+<p><strong>Stat panel 多 series 會爆</strong>：10 region × 3 個壞 pod = 30 個小格子，
+字小到看不清，全部紅燈反而失去資訊。</p>
+<p><strong>Table 才是業界正解</strong>（Kubernetes Dashboard、k9s、ArgoCD 都用 table）：</p>
+<ul>
+<li class="">每個問題一行</li>
+<li class="">排序可控</li>
+<li class="">用 cell coloring 表示嚴重度</li>
+<li class="">PromQL 端先 <code>&gt; 0</code> 過濾、empty 時整張表空白</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="32-為什麼不放原始-path--per-instance-訊號在第一層">3.2 為什麼不放原始 path / per-instance 訊號在第一層？<a href="#32-為什麼不放原始-path--per-instance-訊號在第一層" class="hash-link" aria-label="3.2 為什麼不放原始 path / per-instance 訊號在第一層？的直接連結" title="3.2 為什麼不放原始 path / per-instance 訊號在第一層？的直接連結" translate="no">​</a></h3>
+<p><code>path</code>、<code>pod</code>、<code>instance</code> 這類 label 是<strong>高 cardinality</strong>：</p>
+<ul>
+<li class="">每個 URL / pod 一條 series → query 成本高、legend 雜亂</li>
+<li class="">低流量 path 的 p99 容易抖動且誤導</li>
+</ul>
+<p>正確分層：</p>
+<ul>
+<li class=""><strong>第一層 stat / alert</strong>：用 aggregated 訊號（<code>route_group</code>, deployment）</li>
+<li class=""><strong>第二層 drill-down</strong>：才看 raw <code>path</code>, raw <code>pod</code></li>
+</ul>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="四跟-google-sre-的對照">四、跟 Google SRE 的對照<a href="#四跟-google-sre-的對照" class="hash-link" aria-label="四、跟 Google SRE 的對照的直接連結" title="四、跟 Google SRE 的對照的直接連結" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="41-對齊的部分">4.1 對齊的部分<a href="#41-對齊的部分" class="hash-link" aria-label="4.1 對齊的部分的直接連結" title="4.1 對齊的部分的直接連結" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="four-golden-signals">Four Golden Signals<a href="#four-golden-signals" class="hash-link" aria-label="Four Golden Signals的直接連結" title="Four Golden Signals的直接連結" translate="no">​</a></h4>
+<p>(<a href="https://sre.google/sre-book/monitoring-distributed-systems/" target="_blank" rel="noopener noreferrer" class="">SRE Book ch.6 — Monitoring Distributed Systems</a>)</p>
+<blockquote>
+<p>&quot;If you can only measure four metrics of your user-facing system, focus on
+these: <strong>latency, traffic, errors, saturation</strong>.&quot;</p>
+</blockquote>
+<p>對應一般 alert→triage dashboard：</p>
+<table><thead><tr><th>Google Golden Signal</th><th>一般做法</th></tr></thead><tbody><tr><td>Latency</td><td>p95 / p99 stat</td></tr><tr><td>Traffic</td><td>Traffic vs Baseline stat（雙向）</td></tr><tr><td>Errors</td><td>Error Rate stat</td></tr><tr><td>Saturation</td><td>CPU/memory utilization vs limit</td></tr></tbody></table>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="alert-driven-workflow">Alert-driven workflow<a href="#alert-driven-workflow" class="hash-link" aria-label="Alert-driven workflow的直接連結" title="Alert-driven workflow的直接連結" translate="no">​</a></h4>
+<p>(<a href="https://sre.google/workbook/alerting-on-slos/" target="_blank" rel="noopener noreferrer" class="">SRE Workbook ch.5 — Alerting on SLOs</a>)</p>
+<blockquote>
+<p>&quot;Good SLOs that measure the reliability of your platform, as experienced
+by your customers, provide the highest-quality indication for when an
+on-call engineer should respond.&quot;</p>
+</blockquote>
+<p>→ Dashboard 是 alert 的延伸，不是反過來。</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="noise-reduction">Noise reduction<a href="#noise-reduction" class="hash-link" aria-label="Noise reduction的直接連結" title="Noise reduction的直接連結" translate="no">​</a></h4>
+<p>(<a href="https://sre.google/sre-book/monitoring-distributed-systems/" target="_blank" rel="noopener noreferrer" class="">SRE Book ch.6</a>)</p>
+<blockquote>
+<p>&quot;Effective alerting systems have <strong>good signal and very low noise</strong>.&quot;</p>
+</blockquote>
+<p>→ 「沒事就空白」 = 把 noise 在 query 層就過濾掉。</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="progressive-disclosure">Progressive disclosure<a href="#progressive-disclosure" class="hash-link" aria-label="Progressive disclosure的直接連結" title="Progressive disclosure的直接連結" translate="no">​</a></h4>
+<p>(<a href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" target="_blank" rel="noopener noreferrer" class="">Grafana Best Practices</a>)</p>
+<blockquote>
+<p>&quot;Lead with high-level SLO charts and drill down to per-service,
+per-endpoint, per-pod details.&quot;</p>
+</blockquote>
+<p>→ Row 結構：CUJ → Traffic / Loading → App Resource → Service Health。</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="42-比-google-sre-更實務的部分">4.2 比 Google SRE 更實務的部分<a href="#42-比-google-sre-更實務的部分" class="hash-link" aria-label="4.2 比 Google SRE 更實務的部分的直接連結" title="4.2 比 Google SRE 更實務的部分的直接連結" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="traffic-雙向警報">Traffic 雙向警報<a href="#traffic-雙向警報" class="hash-link" aria-label="Traffic 雙向警報的直接連結" title="Traffic 雙向警報的直接連結" translate="no">​</a></h4>
+<p>Google Golden Signals 的 Traffic 主要描述為 &quot;a measure of demand&quot;，
+<strong>沒明確強調「low traffic = bad」</strong>。</p>
+<p>但實務上：</p>
+<ul>
+<li class="">Service 全 down → traffic = 0 → error rate = 0 → 看似綠燈</li>
+<li class="">Ingress / DNS / cert 壞 → traffic 突降，但 Service Up 可能還是 100%</li>
+</ul>
+<p>→ Traffic 必須<strong>雙向警報</strong>（過低過高都警報），這是 alert→triage 場景的剛需。
+Datadog、Netflix、大型電商也是雙向警報。</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="missing-signals-顯式化">Missing Signals 顯式化<a href="#missing-signals-顯式化" class="hash-link" aria-label="Missing Signals 顯式化的直接連結" title="Missing Signals 顯式化的直接連結" translate="no">​</a></h4>
+<p>把 dashboard <strong>涵蓋不到的 CUJ</strong> 用一個 row 標出來（&quot;Missing CUJ Signals /
+Instrumentation Backlog&quot;），避免「綠燈 = 一切正常」的錯覺。</p>
+<p>業界叫 &quot;known unknowns visible in dashboard&quot;，符合 SRE 精神
+(<a href="https://sre.google/workbook/implementing-slos/" target="_blank" rel="noopener noreferrer" class="">SRE Workbook ch.4 — Implementing SLOs</a>)
+但不在 Google book 範例裡。</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="用-instant-table-取代-stat-panel-列問題">用 instant table 取代 stat panel 列問題<a href="#用-instant-table-取代-stat-panel-列問題" class="hash-link" aria-label="用 instant table 取代 stat panel 列問題的直接連結" title="用 instant table 取代 stat panel 列問題的直接連結" translate="no">​</a></h4>
+<p>Google book 沒講具體呈現選擇。實務上 stat panel 列 N 個問題會擠爆，
+table 才是正解。這是 <strong>operational experience &gt; book example</strong> 的地方。</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="43-saturation-的細節">4.3 Saturation 的細節<a href="#43-saturation-的細節" class="hash-link" aria-label="4.3 Saturation 的細節的直接連結" title="4.3 Saturation 的細節的直接連結" translate="no">​</a></h3>
+<p>Google 的 Saturation 定義：</p>
+<blockquote>
+<p>&quot;<strong>A measure of your system fraction</strong>, emphasizing the resources that are
+most constrained.&quot;</p>
+</blockquote>
+<p>關鍵是「<strong>有上限的資源使用率</strong>」 —— 必須要有「容量」當分母：</p>
+<table><thead><tr><th>訊號</th><th>是不是真的 Saturation</th></tr></thead><tbody><tr><td>In-flight requests（瞬時計數）</td><td>❌ 沒有上限分母，是 Traffic × Latency 衍生（Little&#x27;s Law）</td></tr><tr><td>In-flight / max_concurrent</td><td>✅ 有分母</td></tr><tr><td>CPU usage / CPU limit</td><td>✅</td></tr><tr><td>Memory working set / memory limit</td><td>✅</td></tr><tr><td>Connection pool used / max</td><td>✅</td></tr><tr><td>Queue depth / max queue size</td><td>✅</td></tr></tbody></table>
+<p><strong>常見錯誤</strong>：把 in-flight requests 當成 saturation 訊號。
+它只是 traffic 與 latency 的乘積（Little&#x27;s Law: <code>in-flight = arrival_rate × latency</code>），
+跟 latency 同向變動，沒有獨立資訊。</p>
+<p><strong>正確做法</strong>：</p>
+<ul>
+<li class="">真正的 Saturation 訊號要有「容量分母」</li>
+<li class="">HPA + stateless 場景下，CPU saturation 較不關鍵（HPA 會自動 scale）</li>
+<li class="">Stateful / connection-pool / queue 場景下，Saturation 必須放第一層</li>
+</ul>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="五dashboard-還沒做但-google-sre-強調的進階項">五、Dashboard 還沒做但 Google SRE 強調的進階項<a href="#五dashboard-還沒做但-google-sre-強調的進階項" class="hash-link" aria-label="五、Dashboard 還沒做但 Google SRE 強調的進階項的直接連結" title="五、Dashboard 還沒做但 Google SRE 強調的進階項的直接連結" translate="no">​</a></h2>
+<p>對照 Google SRE 與 Grafana 官方文件，下列項目通常需要分階段實作：</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="burn-rate-alert--slo-based-alert">Burn-rate alert / SLO-based alert<a href="#burn-rate-alert--slo-based-alert" class="hash-link" aria-label="Burn-rate alert / SLO-based alert的直接連結" title="Burn-rate alert / SLO-based alert的直接連結" translate="no">​</a></h3>
+<p>(<a href="https://sre.google/workbook/alerting-on-slos/" target="_blank" rel="noopener noreferrer" class="">SRE Workbook ch.5</a>)</p>
+<p>Google 推薦 multiwindow, multi-burn-rate alerts：</p>
+<blockquote>
+<p>&quot;Fast burn (2% budget consumed in 1 hour) means page immediately;
+Slow burn (5% budget consumed in 6 hours) means ticket for investigation.&quot;</p>
+</blockquote>
+<p>→ 比靜態 threshold 更精準。需要先把 SLO 定下來。</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="runbook-link">Runbook link<a href="#runbook-link" class="hash-link" aria-label="Runbook link的直接連結" title="Runbook link的直接連結" translate="no">​</a></h3>
+<p>(<a href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" target="_blank" rel="noopener noreferrer" class="">Grafana Best Practices</a>)</p>
+<p>每個 stat panel 加 <code>links</code> 欄位 → on-call 點 stat 直接跳 runbook。</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="slo-panel">SLO panel<a href="#slo-panel" class="hash-link" aria-label="SLO panel的直接連結" title="SLO panel的直接連結" translate="no">​</a></h3>
+<p>顯示「目前 error budget 剩多少」，通常 horizontal bar 加在 CUJ row 上方。</p>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="六總結">六、總結<a href="#六總結" class="hash-link" aria-label="六、總結的直接連結" title="六、總結的直接連結" translate="no">​</a></h2>
+<table><thead><tr><th>維度</th><th>對照結果</th></tr></thead><tbody><tr><td>Four Golden Signals 覆蓋</td><td>與 Google 對齊；Saturation 視場景決定放第一層或 drill-down</td></tr><tr><td>Alert-driven triage 工作流</td><td>完全對齊 SRE Workbook ch.5 哲學</td></tr><tr><td>Empty-state / noise reduction</td><td>對齊 SRE Book ch.6；實務上比 Grafana 預設模板更徹底</td></tr><tr><td>Progressive disclosure</td><td>對齊 Grafana 官方 best practices</td></tr><tr><td>Traffic 雙向警報</td><td>比 Google book 範例更貼近真實 on-call 場景</td></tr><tr><td>Missing Signals 顯式化</td><td>超出 Google book 範圍但符合 SRE 精神</td></tr><tr><td>SLO + Error Budget</td><td>多數團隊在 alerting 階段才補上</td></tr><tr><td>Runbook link</td><td>容易補但常被遺漏</td></tr></tbody></table>
+<p><strong>結論</strong>：核心理念跟 Google SRE Workbook + RED Method + Grafana 官方
+best practices 幾乎完全對齊。差異點主要在「實務取捨」，不是「方向錯誤」。</p>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="sources">Sources<a href="#sources" class="hash-link" aria-label="Sources的直接連結" title="Sources的直接連結" translate="no">​</a></h2>
+<ul>
+<li class=""><a href="https://sre.google/sre-book/monitoring-distributed-systems/" target="_blank" rel="noopener noreferrer" class="">Google SRE — Monitoring Distributed Systems (Four Golden Signals)</a></li>
+<li class=""><a href="https://sre.google/workbook/alerting-on-slos/" target="_blank" rel="noopener noreferrer" class="">Google SRE Workbook — Alerting on SLOs (ch.5)</a></li>
+<li class=""><a href="https://sre.google/workbook/implementing-slos/" target="_blank" rel="noopener noreferrer" class="">Google SRE Workbook — Implementing SLOs (ch.4)</a></li>
+<li class=""><a href="https://sre.google/workbook/monitoring/" target="_blank" rel="noopener noreferrer" class="">Google SRE Workbook — Monitoring Systems with Advanced Analytics</a></li>
+<li class=""><a href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/best-practices/" target="_blank" rel="noopener noreferrer" class="">Grafana Dashboard Best Practices</a></li>
+<li class=""><a href="https://betterstack.com/community/guides/monitoring/red-use-metrics/" target="_blank" rel="noopener noreferrer" class="">Better Stack — RED vs USE Metrics</a></li>
+<li class=""><a href="https://pagertree.com/learn/devops/what-is-site-reliability-engineering-sre/four-golden-signals-sre-monitoring" target="_blank" rel="noopener noreferrer" class="">PagerTree — Four Golden Signals: SRE Monitoring</a></li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-tags-row"><div class="col"><b>標籤：</b><ul class="tags_jXut padding--none margin-left--sm"><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/monitoring">monitoring</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/sre">sre</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/grafana">grafana</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/dashboard">dashboard</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/on-call">on-call</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/alerting">alerting</a></li><li class="tag_QGVx"><a rel="tag" class="tag_zVej tagRegular_sFm0" href="/Peter-public-note/tags/golden-signals">golden-signals</a></li></ul></div></div></footer><div style="margin-top:2rem"></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件選項卡"></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#一設計三原則" class="table-of-contents__link toc-highlight">一、設計三原則</a></li><li><a href="#二第一層-stat-row-的設計" class="table-of-contents__link toc-highlight">二、第一層 stat row 的設計</a><ul><li><a href="#21-訊號必須互相獨立-orthogonal" class="table-of-contents__link toc-highlight">2.1 訊號必須<strong>互相獨立</strong> (orthogonal)</a></li><li><a href="#22-訊號要雙向警報" class="table-of-contents__link toc-highlight">2.2 訊號要<strong>雙向警報</strong></a></li><li><a href="#23-service-up-必須獨立於-5xx--latency" class="table-of-contents__link toc-highlight">2.3 Service Up 必須<strong>獨立</strong>於 5xx / latency</a></li></ul></li><li><a href="#三第二層的設計沒事就空白" class="table-of-contents__link toc-highlight">三、第二層的設計：「沒事就空白」</a><ul><li><a href="#31-為什麼用-instant-table-而不是-stat-panel-列問題" class="table-of-contents__link toc-highlight">3.1 為什麼用 instant table 而不是 stat panel 列問題？</a></li><li><a href="#32-為什麼不放原始-path--per-instance-訊號在第一層" class="table-of-contents__link toc-highlight">3.2 為什麼不放原始 path / per-instance 訊號在第一層？</a></li></ul></li><li><a href="#四跟-google-sre-的對照" class="table-of-contents__link toc-highlight">四、跟 Google SRE 的對照</a><ul><li><a href="#41-對齊的部分" class="table-of-contents__link toc-highlight">4.1 對齊的部分</a></li><li><a href="#42-比-google-sre-更實務的部分" class="table-of-contents__link toc-highlight">4.2 比 Google SRE 更實務的部分</a></li><li><a href="#43-saturation-的細節" class="table-of-contents__link toc-highlight">4.3 Saturation 的細節</a></li></ul></li><li><a href="#五dashboard-還沒做但-google-sre-強調的進階項" class="table-of-contents__link toc-highlight">五、Dashboard 還沒做但 Google SRE 強調的進階項</a><ul><li><a href="#burn-rate-alert--slo-based-alert" class="table-of-contents__link toc-highlight">Burn-rate alert / SLO-based alert</a></li><li><a href="#runbook-link" class="table-of-contents__link toc-highlight">Runbook link</a></li><li><a href="#slo-panel" class="table-of-contents__link toc-highlight">SLO panel</a></li></ul></li><li><a href="#六總結" class="table-of-contents__link toc-highlight">六、總結</a></li><li><a href="#sources" class="table-of-contents__link toc-highlight">Sources</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Peter Y. Huang. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>
