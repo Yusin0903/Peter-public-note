@@ -4,46 +4,44 @@ sidebar_position: 10
 
 # 集中式多 Region 監控 — 技術選型
 
-> **背景：** 服務在 10 個 AWS Region 各跑一套 Prometheus + Grafana，工程師需查看 10 個不同 URL 才能得到全貌，且沒有統一 alerting。
-> **目標：** 一個 Grafana URL、一套 alert system、所有 Region 資料都進得來。
+> **背景：** 最近剛加入新公司，接到的第一個專案就是要將原本沒人在看的監控系統重構，原本的背景是這樣的，目前有約 10 個 AWS Region，每個 region 各跑一套 Prometheus + Grafana，Alert 是做在 Grafana Alert，有 59 個 Alert 但真的有用的很少，目前困境就是 10 個 region 有 10 個 Grafana URL 然後 alert 又太多雜音，所以幾乎沒人在看，據說只有三四個 alert 是會看的 XD 
+> **目標：** 當然就是要
+>  1. actionable 的 alert
+>  2. 可以快速定位問題的 dashboard
+>  3. 可以集中的 dashboard 減少切換算加分項
+>  4. 所有 dashboard + alert 都 IaC 化，之前 dashboard 跟 alert 都是手動 export 複製，想想改了一個 dashboard 要搞十次頭就痛。
 
 ---
 
 ## 先量，再選型
+再決定要用什麼 tech stack 之前先量測當前的數據，並以 180 Days retention  和 1.5 倍成長來做成本預估。
+```PromQL
+# Average ingestion rate (samples/sec) over the past 90 days, summed across all Prometheus instances, sampled hourly. 
+avg_over_time(sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))[90d:1h])
 
-最常見的錯誤：用估算值做成本分析。
-
-```promql
-# 看每個 Prometheus 目前有多少 active time series
-avg_over_time(prometheus_tsdb_head_series[7d])
-
-# 看攝取速率（samples/sec）
-sum(rate(prometheus_tsdb_head_samples_appended_total[7d]))
+# Average number of active time series over the past 90 days, summed across all Prometheus instances, sampled hourly.
+avg_over_time(sum(prometheus_tsdb_head_series)[90d:1h])
 ```
 
 **實測結果（7 個 Region 範例）：**
 
-| Region | Active Series | Ingestion Rate |
-|--------|:------------:|:--------------:|
-| SG (ap-southeast-1) | 1,600,868 | 25,255 samples/sec |
-| US (us-east-1) | 765,383 | 11,066 samples/sec |
-| EU (eu-central-1) | 651,737 | 9,426 samples/sec |
-| JP (ap-northeast-1) | 529,036 | 7,442 samples/sec |
-| IN (ap-south-1) | 298,108 | 4,219 samples/sec |
-| AU (ap-southeast-2) | 262,717 | 3,839 samples/sec |
-| ZA (af-south-1) | 183,347 | 2,773 samples/sec |
-| **7 Region 合計** | **~4.29M** | **~64,020 samples/sec** |
-| **10 Region 估算** | **~4.9M** | **~75,000 samples/sec** |
-
-> SG 的某個服務有基數爆炸問題（2,976,623 samples/scrape），是全體的 10 倍，另行追蹤。
-
-原始假設是每 Region 50K series → **實際平均是 613K，誤差 12 倍**。這個數字讓 AMP 從「可考慮」直接變成「不可接受」。
+| Region                   | Active Time Series | Ingestion Rate          |
+| ------------------------ | ------------------ | ----------------------- |
+| A                        | 1,238,565          | 18,771 samples/sec      |
+| B                        | 770,537            | 11,151 samples/sec      |
+| C                        | 651,737            | 9,426 samples/sec       |
+| D                        | 529,036            | 7,442 samples/sec       |
+| E                        | 298,108            | 4,219 samples/sec       |
+| F                        | 262,717            | 3,839 samples/sec       |
+| G                        | 183,347            | 2,773 samples/sec       |
+| **7 measured regions**   | **3,934,047**      | **~57,621 samples/sec** |
+| **10 regions estimated** | **~5,600,000**     | **~82,000 samples/sec** |
 
 ---
 
 ## 網路前提：Transit Gateway
 
-所有跨 Region 的 remote_write 流量走 **AWS Transit Gateway（TGW）**，不走公開網路。
+所有跨 Region 的流量走 **AWS Transit Gateway（TGW）**，不走公開網路。
 
 - 費用：$0.02/GB（TGW attachment fee）
 - 比走 NAT Gateway（$0.045/GB）便宜
@@ -171,14 +169,14 @@ Federation 中央只有：
                            Central Grafana
 ```
 
-| 項目 | 每月 |
-|------|:----:|
-| vminsert（2× c5.large） | ~$125 |
-| vmselect（2× m5.large） | ~$140 |
-| vmstorage（3× r5.large，16GB RAM） | ~$277 |
-| EBS gp3（3× 500GB，90 天保留） | ~$120 |
-| 跨 Region 傳輸（TGW） | ~$25 |
-| **合計** | **~$555-575** |
+| 項目                              |      每月       |
+| ------------------------------- | :-----------: |
+| vminsert（2× c5.large）           |     ~$125     |
+| vmselect（2× m5.large）           |     ~$140     |
+| vmstorage（3× r5.large，16GB RAM） |     ~$277     |
+| EBS gp3（3× 500GB，90 天保留）        |     ~$120     |
+| 跨 Region 傳輸（TGW）                |     ~$25      |
+| **合計**                          | **~$555-575** |
 
 **選用理由：**
 

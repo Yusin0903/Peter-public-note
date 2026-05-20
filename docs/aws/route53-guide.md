@@ -57,7 +57,7 @@ Route53 是 AWS 的 DNS 服務，負責把域名翻譯成 IP 地址。
 
 ## CNAME vs Alias
 
-**問題：ALB 沒有固定 IP，IP 會隨時變。怎麼讓域名指向 ALB？**
+	**問題：ALB 沒有固定 IP，IP 會隨時變。怎麼讓域名指向 ALB？**
 
 ### CNAME（標準 DNS）
 
