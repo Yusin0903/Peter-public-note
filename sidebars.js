@@ -13,11 +13,17 @@ const sidebars = {
         'aws/irsa-guide',
         'aws/ecr-complete-guide',
         'aws/cli-credentials-guide',
-        'aws/terraform-terragrunt-glossary',
         'aws/dynamodb-no-connection-pool',
         'aws/service-token-dynamodb',
         'aws/sqs-client-and-md5',
         'aws/sqs-polling-and-vs-rabbitmq',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'DevOps',
+      items: [
+        'devops/terraform/glossary',
       ],
     },
     {

@@ -14,6 +14,5 @@ sidebar_position: 1
 - **[IRSA：Pod 存取 AWS 資源](./irsa-guide)** — 為什麼不要用 Access Key、IRSA 設定步驟、Python 範例
 - **[ECR 完整指南](./ecr-complete-guide)** — 建立 repo、push/pull、跨帳號操作
 - **[AWS CLI 認證指南](./cli-credentials-guide)** — Access Key、Session Token、Profile 管理
-- **[Terraform & Terragrunt](./terraform-terragrunt-glossary)** — IaC 核心概念、State、Module、多環境管理、部署流程
 - **[DynamoDB](./dynamodb-no-connection-pool)** — Connection Pool、Service Token
 - **[SQS](./sqs-polling-and-vs-rabbitmq)** — Polling、vs RabbitMQ、Client MD5
