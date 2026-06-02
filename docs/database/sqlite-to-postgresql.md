@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # SQLite 遷移到 PostgreSQL
 
-## 先問：真的需要遷移嗎？
+## 先問：真的需要 migrate 嗎？
 
 **SQLite 在這些推論服務場景是完全合理的選擇，不要為了遷移而遷移：**
 
@@ -18,8 +18,6 @@ sidebar_position: 3
 | 需要真正的 ACID + 行鎖 | 換 PostgreSQL |
 | 資料量超過 10GB 且有複雜查詢 | 換 PostgreSQL |
 | 需要 JSONB、全文搜尋、向量搜尋 | 換 PostgreSQL |
-
-> **Python 類比**：SQLite 就像 Python 的 `dict` + `pickle`，對單一程序完全夠用；PostgreSQL 就像 Redis 或 Kafka，是為了多個 worker/服務共享狀態而存在。不要因為「PostgreSQL 比較專業」就換，要因為「SQLite 解決不了我的問題」才換。
 
 ---
 
@@ -78,8 +76,6 @@ CREATE TABLE models (name TEXT);
 -- 建議：PostgreSQL 裡直接用 TEXT，效能和 VARCHAR 一樣，但少了長度限制的麻煩
 CREATE TABLE models (name TEXT);
 ```
-
-> **Python 類比**：SQLite 的 TEXT 就像 Python `str`，PostgreSQL 的 `VARCHAR(100)` 就像 `str` 但加了 `assert len(s) <= 100`。推論服務存 model name、label、描述，建議都用 `TEXT`，不要設長度限制。
 
 **SQLAlchemy 寫法**：
 
@@ -243,7 +239,7 @@ psql -c "SELECT MAX(id) FROM inference_results;" inference_pg
 
 ---
 
-## 推薦遷移流程（含 Alembic）
+## 推薦 migrate 流程（含 Alembic）
 
 如果你的服務已在用 Alembic 管理 schema：
 
@@ -268,7 +264,7 @@ python scripts/verify_migration.py
 
 ---
 
-## 遷移後的狀態
+## migrate 後的狀態
 
 - **SQLite** 保持不變，pgloader 只讀取不修改
 - **PostgreSQL** 會有從 SQLite schema 建立的新 table，以及遷移過來的所有資料

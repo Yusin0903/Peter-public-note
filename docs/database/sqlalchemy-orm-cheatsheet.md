@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# SQLAlchemy 2.0 完整指南（推論服務版）
+# SQLAlchemy 2.0 完整指南
 
 ## 基本查詢
 
@@ -77,18 +77,9 @@ sidebar_position: 2
 
 ---
 
-## Async SQLAlchemy（FastAPI 推論服務必讀）
+## Async SQLAlchemy
 
-FastAPI 是 async-first 框架，推論服務通常需要高並發，**必須用 AsyncSession**，否則會阻塞 event loop，把 async 的優勢全部抵消。
-
-> **Python 類比**：同步的 `session.execute()` 就像 `requests.get()`，會阻塞整個執行緒。非同步的 `await session.execute()` 就像 `await asyncio.gather()`，可以同時處理多個請求。
-
-### 安裝
-
-```bash
-pip install sqlalchemy[asyncio] asyncpg
-```
-
+FastAPI 是 async-first 框架，推論服務通常需要高並發，所以推薦用**AsyncSession**，否則會阻塞 event loop，把 async 的優勢全部抵消。
 ### Engine 與 Session 設定
 
 ```python
@@ -177,12 +168,9 @@ async with AsyncSessionLocal() as session:
 ```
 
 ---
-
 ## Relationship 載入策略（N+1 問題）
 
 N+1 問題是 ORM 最常見的效能陷阱：查 1 筆主記錄，再為每筆主記錄各發 1 次查詢取關聯資料，總共 N+1 次查詢。
-
-> **Python 類比**：想像你有一個 list of job IDs，然後在 for loop 裡對每個 ID 呼叫 `requests.get(f"/result/{id}")`。正確做法是一次傳所有 ID：`requests.post("/results/batch", json={"ids": ids})`。
 
 ### 定義 Model 時指定預設載入策略
 
@@ -270,19 +258,7 @@ async def store_batch_results(
     await db.commit()
 ```
 
-### 方法二：`bulk_insert_mappings`（SQLAlchemy 1.x 風格，仍可用）
-
-```python
-async def store_batch_results_v1(
-    db: AsyncSession,
-    results: list[dict]
-) -> None:
-    db.add_all([InferenceResult(**r) for r in results])
-    await db.flush()
-    await db.commit()
-```
-
-### 方法三：COPY（最終武器，百萬級資料）
+### 方法二：COPY（最終武器，百萬級資料）
 
 直接用 PostgreSQL COPY 協定，比 INSERT 快 5-10 倍：
 
@@ -322,7 +298,7 @@ async def bulk_copy_results(
 
 ---
 
-## Connection Pool 調優（推論服務）
+## Connection Pool 調優
 
 推論服務通常有多個 worker（uvicorn workers 或 Celery workers），每個 worker 都需要連線池。**設錯連線池是推論服務最常見的線上故障原因之一。**
 
@@ -370,79 +346,6 @@ PostgreSQL 預設 max_connections = 100 → 會爆！
 2. 調小每個 worker 的 pool_size
 3. 加 PgBouncer（見 postgresql-notes.md）
 ```
-
----
-
-## Repository Pattern（推論服務的標準架構）
-
-直接在 route 裡寫 SQLAlchemy 查詢，時間久了難以維護和測試。Repository Pattern 把資料庫操作封裝起來，讓 route 只關心業務邏輯。
-
-> **Python 類比**：Repository 就像 Python 的 `dataclass` + method，把「如何存取資料」和「業務邏輯用資料做什麼」分離開來。
-
-```python
-# repositories/inference_result.py
-from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert, func
-from ..models import InferenceResult
-
-class InferenceResultRepository:
-    def __init__(self, session: AsyncSession):
-        self.session = session
-
-    async def get_by_job_id(self, job_id: str) -> Optional[InferenceResult]:
-        result = await self.session.execute(
-            select(InferenceResult)
-            .where(InferenceResult.job_id == job_id)
-        )
-        return result.scalar_one_or_none()
-
-    async def get_latest_by_model(
-        self,
-        model_name: str,
-        limit: int = 100
-    ) -> list[InferenceResult]:
-        result = await self.session.execute(
-            select(InferenceResult)
-            .where(InferenceResult.model_name == model_name)
-            .order_by(InferenceResult.created_at.desc())
-            .limit(limit)
-        )
-        return result.scalars().all()
-
-    async def bulk_create(self, results: list[dict]) -> None:
-        await self.session.execute(
-            insert(InferenceResult),
-            results
-        )
-
-    async def count_by_model(self, model_name: str) -> int:
-        result = await self.session.execute(
-            select(func.count())
-            .select_from(InferenceResult)
-            .where(InferenceResult.model_name == model_name)
-        )
-        return result.scalar_one()
-```
-
-在 route 中使用：
-
-```python
-# routes/inference.py
-@router.post("/results/batch")
-async def store_batch(
-    payload: BatchResultPayload,
-    db: AsyncSession = Depends(get_db)
-):
-    repo = InferenceResultRepository(db)
-    await repo.bulk_create(payload.results)
-    return {"stored": len(payload.results)}
-```
-
-**優點**：
-- Unit test 只需 mock `InferenceResultRepository`，不需要真實 DB
-- 換 ORM 或換資料庫只改 repository，route 不動
-- 查詢邏輯集中管理，容易 review
 
 ---
 

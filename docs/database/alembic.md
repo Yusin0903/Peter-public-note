@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Alembic 完整工作指南
 
-## 心智模型：Alembic 如何追蹤版本
+## Alembic 如何追蹤版本
 
 Alembic 在資料庫裡維護一張叫 `alembic_version` 的表，只有一欄 `version_num`，記錄當前 schema 的版本 hash。
 
@@ -19,9 +19,6 @@ SELECT version_num FROM alembic_version;
 ```
 None → a1b2c3 → d4e5f6 → a3b4c5 (head)
 ```
-
-> **Python 類比**：想像成 Git commit history。每個 migration 就是一個 commit，有 SHA 和 parent SHA。`alembic upgrade head` 等同於 `git checkout main`，`alembic downgrade -1` 等同於 `git revert HEAD~1`。
-
 ```python
 # alembic/versions/a3b4c5d6e7f8_add_inference_results.py
 revision = 'a3b4c5d6e7f8'
@@ -217,7 +214,7 @@ spec:
 
 Init container 必須成功退出，主 container 才會啟動。自動保證「migration 先於 app」。
 
-### 方法二：Kubernetes Job（推薦，可審計）
+### 方法二：Kubernetes Job
 
 ```yaml
 # migration-job.yaml

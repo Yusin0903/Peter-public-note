@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# PostgreSQL 深度筆記（推論服務版）
+# PostgreSQL Note
 
 ## MVCC（Multiversion Concurrency Control）
 
