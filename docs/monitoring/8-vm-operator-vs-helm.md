@@ -166,6 +166,6 @@ spec:
 
 ## 相關 note
 
-- [K8s Operator 模式](/docs/kubernetes/k8s-operator-pattern) — 通用 Operator vs Helm 比較
-- [K8s Storage 實戰陷阱](/docs/kubernetes/k8s-storage) — PV/PVC、AZ、Multi-Attach 細節
-- [VictoriaMetrics 架構](/docs/monitoring/4-victoriametrics-architecture) — VM 元件本身
+- [K8s Operator 模式](../kubernetes/k8s-operator-pattern.md) — 通用 Operator vs Helm 比較
+- [K8s Storage 實戰陷阱](../kubernetes/k8s-storage.md) — PV/PVC、AZ、Multi-Attach 細節
+- [VictoriaMetrics 架構](./4-victoriametrics-architecture.md) — VM 元件本身
