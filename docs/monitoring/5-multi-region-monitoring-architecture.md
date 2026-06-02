@@ -4,8 +4,23 @@ sidebar_position: 14
 
 # 多 Region 監控架構（完整網路細節）
 
-> 這份筆記記錄集中式監控架構的網路層細節，包含 VPC、ALB、Ingress、DNS、ACM、Secrets Manager 的完整設定細節。
-> **環境：** Central 跑在 `us-east-1` EKS，各 Region Prometheus 推資料進來。
+> 🔧 **深水區實作參考** — 不是入門。先讀 [VictoriaMetrics 架構](./4-victoriametrics-architecture.md) 了解 vminsert/vmselect/vmstorage 角色，再回來看網路怎麼接。
+
+## TL;DR（30 秒版）
+
+- **解決什麼：** 散在各 Region（sg/us/eu/jp/in/au/za）的 Prometheus，如何把資料集中推到 `us-east-1` 的一套 VictoriaMetrics cluster。
+- **資料怎麼流（寫入）：** Region Prometheus `remote_write` → **走 TGW 內網**（不走公網）→ Central 的 internal ALB（TLS terminate）→ **vmauth** 驗 bearer token → **vminsert**（consistent hash）→ **vmstorage**（replicationFactor=2 雙寫 EBS）。
+- **資料怎麼流（讀取）：** Grafana **直連 vmselect**（不過 vmauth、不過 ALB）→ fan-out 所有 vmstorage → 合併去重。
+- **最常見的靜默失敗：** ① TGW 通但 [Route53 PHZ 沒關聯](#5-route53-private-hosted-zonephz) → DNS 解析失敗；② [Security Group](#security-group-設定常見靜默失敗來源) 漏開一條 → connection timeout。
+
+| 你會在這篇找到 | 章節 |
+|---|---|
+| 整體資料流向 | [整體架構圖](#整體架構圖)、[請求完整流程](#請求完整流程寫入) |
+| 網路層設定（TGW/ALB/DNS/ACM） | [各層細節說明](#各層細節說明) §2–5 |
+| Token / 權限隔離 | [Secrets Manager](#6-secrets-manager--token-管理)、[VMAuth 路由](#7-victoriametrics-operator--vmauth-路由規則) |
+| 踩過的坑 | [PHZ 陷阱](#5-route53-private-hosted-zonephz)、[SG 靜默失敗](#security-group-設定常見靜默失敗來源)、[ALB idle timeout](#alb-idle-timeout-與-remote_write-長連線)、[WAL 容忍](#wal-緩衝與-tgw-中斷容忍) |
+
+> **相關筆記：** [Thanos vs VictoriaMetrics 選型](./2-thanos-vs-victoriametrics.md)｜[VMAuth/VMUser 等術語](./vm-glossary.md)｜[Operator vs Helm 部署](./8-vm-operator-vs-helm.md)｜[Alerting HA 設計](./7-alerting-ha-design.md)
 
 ---
 
@@ -578,7 +593,7 @@ TGW 中斷 > 2 小時：
 超過 2 小時 = ~540M samples 可能丟失
 
 改善方法：
-  - 換成 VMAgent 取代 Prometheus（VMAgent 支援可設定更長的持久磁碟 queue）
+  - 換成 VMAgent 取代 Prometheus（VMAgent 支援可設定更長的持久磁碟 queue）→ see 術語 [vm-glossary](./vm-glossary.md)
   - 設定 remote_write queue_config.max_samples_per_send 和 max_shards
 ```
 
