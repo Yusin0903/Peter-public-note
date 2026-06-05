@@ -1,7 +1,6 @@
 ---
 sidebar_position: 2
 ---
-
 # Singleton vs 多實例 設計模式
 
 ## Singleton（單例）

@@ -144,21 +144,6 @@ except ClientError as e:
 
 **Standard Queue 保證 at-least-once，不保證 exactly-once。** 這代表你的 inference handler 可能收到同一筆訊息兩次。
 
-> **Python 類比**：就像你的函式可能被呼叫兩次，你必須確保呼叫兩次和一次的結果相同。
->
-> ```python
-> # ❌ 非冪等：呼叫兩次會計費兩次、結果不同
-> def process_payment(amount):
->     charge_credit_card(amount)  # 被呼叫兩次 → 扣款兩次！
->
-> # ✅ 冪等：呼叫兩次和一次的最終狀態相同
-> def process_payment(amount, idempotency_key):
->     if payment_already_done(idempotency_key):
->         return "already processed"
->     charge_credit_card(amount)
->     mark_as_done(idempotency_key)
-> ```
-
 ```python
 # Inference handler 的冪等性設計
 import boto3

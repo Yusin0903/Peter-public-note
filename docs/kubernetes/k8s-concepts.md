@@ -17,7 +17,7 @@ K8s 的核心架構拆成幾個主題，每個主題有對應的獨立頁面。
 | [可觀測性](./k8s-observability) | Pod log 查詢、kubectl exec/describe/top、events、CrashLoopBackOff 診斷流程、EKS vs Lambda 選型 |
 | [名詞對照表](./k8s-nav) | K8s & AWS 核心名詞、ConfigMap/Secret/Namespace/HPA/ResourceQuota/LimitRange/IRSA 詳解 |
 | [部署工具](./k8s-deployment-tools) | Terraform 定位、Helm values 多環境管理、Kustomize overlay、ArgoCD GitOps 流程 |
-| [Docker 技巧](./docker-tips) | Multi-stage build、GPU Dockerfile、.dockerignore 最佳實踐 |
+| [Docker 技巧](docs/docker/docker-tips.md) | Multi-stage build、GPU Dockerfile、.dockerignore 最佳實踐 |
 
 ---
 
@@ -51,7 +51,7 @@ K8s 的核心架構拆成幾個主題，每個主題有對應的獨立頁面。
 | /dev/shm | `emptyDir medium: Memory` | [Workload 類型](./k8s-workloads) |
 | AWS 權限 | IRSA + ServiceAccount，不用 hardcode credentials | [名詞對照表](./k8s-nav) |
 | Batch Job timeout | `activeDeadlineSeconds` | [CronJob](./k8s-cronjob) |
-| Image 大小 | Multi-stage build，model weights 不打包進 image | [Docker 技巧](./docker-tips) |
+| Image 大小 | Multi-stage build，model weights 不打包進 image | [Docker 技巧](docs/docker/docker-tips.md) |
 
 ---
 

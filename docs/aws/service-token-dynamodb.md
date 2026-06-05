@@ -8,17 +8,6 @@ sidebar_position: 3
 
 把 token 存在 DynamoDB，讓服務在 runtime 動態讀取，而不是寫死在環境變數裡。
 
-> **Python 類比**：就像把敏感設定放進資料庫而不是 `.env`，每次需要時動態查詢，不用重啟服務就能換掉。
->
-> ```python
-> # ❌ 寫死在環境變數（換 token 要重新部署）
-> import os
-> token = os.environ["SERVICE_TOKEN"]
->
-> # ✅ 從 DynamoDB 動態讀取（換 token 只要改 DB）
-> token = provider.get_service_token()
-> ```
-
 ---
 
 ## 為什麼需要 Service Token

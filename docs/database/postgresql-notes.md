@@ -1,7 +1,6 @@
 ---
 sidebar_position: 4
 ---
-
 # PostgreSQL Note
 
 ## MVCC（Multiversion Concurrency Control）

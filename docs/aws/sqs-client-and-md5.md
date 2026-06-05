@@ -141,8 +141,6 @@ finally:
     stop_event.set()  # 停止 heartbeat
 ```
 
-> **Python 類比**：就像 `threading.Lock` 的 timeout 機制——如果你持有 lock 太久，別人的等待就會超時。Visibility timeout 就是 SQS 替你設的「你最多可以拿著這筆訊息多久」。
-
 ---
 
 ## Dead Letter Queue（DLQ）

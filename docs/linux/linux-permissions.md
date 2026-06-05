@@ -1,7 +1,6 @@
 ---
 sidebar_position: 1
 ---
-
 # Linux 權限
 
 ## chmod 數字對應

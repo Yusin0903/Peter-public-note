@@ -1,7 +1,6 @@
 ---
 sidebar_position: 15
 ---
-
 # ALB（Application Load Balancer）
 
 HTTP/HTTPS 流量入口，根據 path 或 header 分流到不同後端。

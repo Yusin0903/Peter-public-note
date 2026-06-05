@@ -59,6 +59,7 @@ sidebar_position: 11
 
 > 元件數差距：Thanos 約 **1.7 倍** 於 VMCluster。
 
+
 ---
 
 ## 架構模式比較
@@ -312,7 +313,7 @@ VM 在 source 端的優勢更明顯：
 
 ---
 
-## 不選 Thanos 的原因（以本場景為例）
+## 不選 Thanos 的原因
 
 1. **Sidecar 模式違背「零中斷遷移」策略** — 10 個 Region 全部要改 manifest + rollout
 2. **Receive 模式元件複雜** — 雖已 production-ready（Thanos v0.32+），但 hashring 設定複雜、社群案例仍少於 Sidecar 模式

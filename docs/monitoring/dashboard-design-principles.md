@@ -2,7 +2,6 @@
 tags: [monitoring, sre, grafana, dashboard]
 updated: 2026-05-06
 ---
-
 # Dashboard Design Principles for User-Facing Apps
 
 設計監控 dashboard 的通用原則：先 CUJ（使用者體驗）再往下 drill。

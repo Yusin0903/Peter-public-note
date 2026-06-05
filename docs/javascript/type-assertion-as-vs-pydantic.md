@@ -1,7 +1,6 @@
 ---
 sidebar_position: 4
 ---
-
 # TypeScript 型別系統 vs Python 型別系統
 
 ## TypeScript `as` 型別斷言

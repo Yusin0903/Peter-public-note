@@ -1,7 +1,6 @@
 ---
 sidebar_position: 1
 ---
-
 # Keycloak 核心概念
 
 ## HttpOnly Cookie
@@ -56,7 +55,7 @@ document.cookie 讀不到這個 cookie
   |                       |<------------------------------------- result ------|
 ```
 
-### FastAPI 保護推論 API 端點
+### FastAPI 保護推論 API endpoints
 
 ```python
 # requirements: fastapi uvicorn python-jose[cryptography] httpx
@@ -125,7 +124,6 @@ async def infer(
 ```
 
 ---
-
 ## JWT 驗證（python-jose vs PyJWT）
 
 ### python-jose（支援 JWKS，推薦用於 Keycloak）

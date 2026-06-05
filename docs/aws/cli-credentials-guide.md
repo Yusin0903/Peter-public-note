@@ -1,7 +1,6 @@
 ---
 sidebar_position: 8
 ---
-
 # AWS CLI 認證完整指南：Access Key、Session Token、Profile
 
 AWS CLI 的認證方式有很多種，這份筆記從最基礎的 Access Key 講起，說明各種認證方式的差異和使用情境。
@@ -19,7 +18,6 @@ AWS CLI 認證方式（優先順序由高到低）：
 ```
 
 ---
-
 ## Access Key 是什麼
 
 Access Key 是 IAM User 的長期憑證，由兩個部分組成：

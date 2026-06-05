@@ -1,7 +1,6 @@
 ---
 sidebar_position: 2
 ---
-
 # Promise & async/await
 
 ## 為什麼需要 Promise？

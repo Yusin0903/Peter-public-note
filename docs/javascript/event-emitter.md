@@ -1,7 +1,6 @@
 ---
 sidebar_position: 6
 ---
-
 # EventEmitter 事件系統
 
 EventEmitter 是 Node.js 的內建模組，不需要另外安裝。

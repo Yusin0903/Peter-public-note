@@ -1,7 +1,6 @@
 ---
 sidebar_position: 15
 ---
-
 # VictoriaMetrics 自我監控
 
 > 監控系統本身也需要被監控。VM cluster 有一批關鍵 metrics，沒有設好這些告警，資料靜默丟失你不會知道。

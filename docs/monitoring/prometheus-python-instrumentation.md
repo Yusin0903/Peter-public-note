@@ -1,13 +1,11 @@
 ---
 sidebar_position: 8
 ---
-
 # Python 推論服務 Prometheus 埋點完全指南
 
 > 從零開始，把你的 FastAPI 推論服務接上 Prometheus，讓 p99 延遲、錯誤率、模型狀態一覽無遺。
 
 ---
-
 ## 安裝
 
 ```bash

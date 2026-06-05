@@ -1,7 +1,6 @@
 ---
 sidebar_position: 7
 ---
-
 # 連線池共用 & Release 資源管理
 
 ## 連線池是什麼

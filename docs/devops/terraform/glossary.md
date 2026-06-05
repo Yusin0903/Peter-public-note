@@ -1,7 +1,6 @@
 ---
 sidebar_position: 9
 ---
-
 # Terraform & Terragrunt 名詞對照表
 
 ---

@@ -1,7 +1,6 @@
 ---
 sidebar_position: 3
 ---
-
 # JS 語法對照（vs Python）
 
 快速對照表，讓 Python 開發者一眼看懂 JS/TS 語法。

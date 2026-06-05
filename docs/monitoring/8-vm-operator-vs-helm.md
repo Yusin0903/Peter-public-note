@@ -1,7 +1,6 @@
 ---
 sidebar_position: 17
 ---
-
 # VictoriaMetrics 部署模式：Operator vs Helm chart
 
 VM 官方有兩種主流部署方式——**VM Operator + CRD** 跟**直接 Helm chart**。兩個 chart 都在 `victoriametrics.github.io/helm-charts`，但機制完全不同。踩過坑後整理選擇邏輯。

@@ -1,7 +1,6 @@
 ---
 sidebar_position: 1
 ---
-
 # Alembic 完整工作指南
 
 ## Alembic 如何追蹤版本

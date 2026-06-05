@@ -1,10 +1,7 @@
 ---
 sidebar_position: 14
 ---
-
 # 多 Region 監控架構（完整網路細節）
-
-> 🔧 **深水區實作參考** — 不是入門。先讀 [VictoriaMetrics 架構](./4-victoriametrics-architecture.md) 了解 vminsert/vmselect/vmstorage 角色，再回來看網路怎麼接。
 
 ## TL;DR（30 秒版）
 

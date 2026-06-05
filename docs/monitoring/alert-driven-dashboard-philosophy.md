@@ -3,7 +3,6 @@ tags: [monitoring, sre, grafana, dashboard, on-call, alerting, golden-signals]
 created: 2026-05-06
 updated: 2026-05-06
 ---
-
 # Alert-Driven Dashboard Philosophy
 
 對照 Google SRE 的設計理念。Dashboard 不是用來「常駐盯盤」的，而是 **alert

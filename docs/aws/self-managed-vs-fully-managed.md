@@ -124,20 +124,6 @@ AWS 負責：
 └── 付錢（按讀寫單位計費）
 ```
 
-> **Python 類比**：就像直接用 `boto3` 操作 DynamoDB，你只寫業務邏輯，基礎設施完全不用管。
->
-> ```python
-> import boto3
->
-> # 全託管：你只寫這個，底層一切都是 AWS 的事
-> dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-> table = dynamodb.Table("my-table")
->
-> table.put_item(Item={"id": "123", "value": "hello"})
-> response = table.get_item(Key={"id": "123"})
-> # 備份？擴容？HA？→ AWS 自動處理，你完全不用管
-> ```
-
 ---
 
 ## 決策指南：Inference System 該選哪個？

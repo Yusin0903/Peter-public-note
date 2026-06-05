@@ -1,7 +1,6 @@
 ---
 sidebar_position: 16
 ---
-
 # Alerting HA 設計：vmalert + Alertmanager
 
 > 單一 vmalert pod 是 alerting 的單點故障。這份筆記記錄如何設計 HA alerting，以及 Alertmanager inhibit_rules 在多 Region 環境下的重要性。

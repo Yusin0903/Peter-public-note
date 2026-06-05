@@ -1,10 +1,10 @@
 ---
 sidebar_position: 14
 ---
-
 # ECR（Elastic Container Registry）
 
-AWS 的私有 Docker image 倉庫。Push 前 repository 必須先手動建立。
+ECR 就是 AWS 的私有 Docker hub。
+跟 docker hub 比較不一樣是 push 前 repository 必須先手動建立，除此以外其實跟 docker hub 操作差不多。
 
 ---
 
@@ -17,7 +17,6 @@ account_id   region          domain       repo     tag
 ```
 
 ---
-
 ## 3 個核心指令
 
 ```bash
@@ -42,4 +41,3 @@ docker build ──→ docker tag ──→ docker push ──→ ECR Repository
                                              EKS pull image ←──┘
 ```
 
-完整操作（跨帳號、批次 push、常見錯誤）見 [ECR 完整指南](./ecr-complete-guide)。

@@ -1,7 +1,6 @@
 ---
 sidebar_position: 10
 ---
-
 # IRSA：K8s Pod 存取 AWS 資源的正確方式
 
 IRSA（IAM Roles for Service Accounts）是 EKS 上讓 Pod 取得 AWS 資源存取權限的正確方式。
@@ -132,20 +131,6 @@ response = s3.get_object(Bucket="my-bucket", Key="data.csv")
 # EKS 上：自動用 IRSA token
 # 完全透明，code 不需要判斷環境
 ```
-
-> **類比：**
-> ```python
-> # IRSA = 動態取得 token，而不是 hardcode 密碼
->
-> # ❌ 錯誤（hardcode）：
-> AWS_KEY = "AKIAIOSFODNN7EXAMPLE"   # 洩漏就完了
->
-> # ✅ 正確（IRSA）：
-> import boto3
-> session = boto3.Session()
-> # SDK 自動去取臨時 token，每小時自動 rotate
-> creds = session.get_credentials()
-> ```
 
 ---
 
