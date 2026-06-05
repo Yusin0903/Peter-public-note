@@ -11,7 +11,7 @@ const sidebars = {
         'aws/nat-gateway-vs-transit-gateway',
         'aws/acm-guide',
         'aws/irsa-guide',
-        'aws/ecr-complete-guide',
+        'aws/ecr-nav',
         'aws/cli-credentials-guide',
         'aws/dynamodb-no-connection-pool',
         'aws/service-token-dynamodb',
@@ -52,7 +52,7 @@ const sidebars = {
         'kubernetes/k8s-observability',
         'kubernetes/k8s-glossary',
         'kubernetes/k8s-deployment-tools',
-        'kubernetes/docker-tips',
+        'docker/docker-tips',
       ],
     },
     {
@@ -69,7 +69,6 @@ const sidebars = {
         'monitoring/alerting-ha-design',
         'monitoring/prometheus-default-metrics-reference',
         'monitoring/prometheus-python-instrumentation',
-        'monitoring/prometheus-victoriametrics-glossary',
         'monitoring/vm-glossary',
       ],
     },
@@ -103,13 +102,6 @@ const sidebars = {
       label: 'Linux',
       items: [
         'linux/linux-permissions',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'FFmpeg',
-      items: [
-        'ffmpeg/compression',
       ],
     },
     {
