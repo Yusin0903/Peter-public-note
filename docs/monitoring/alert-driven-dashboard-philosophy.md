@@ -1,6 +1,4 @@
 ---
-tags: [monitoring, sre, grafana, dashboard, on-call, alerting, golden-signals]
-created: 2026-05-06
 updated: 2026-05-06
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

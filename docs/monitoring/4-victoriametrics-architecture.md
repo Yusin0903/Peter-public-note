@@ -1,6 +1,5 @@
 ---
 id: 4-victoriametrics-architecture
-title: "VictoriaMetrics 架構介紹"
 sidebar_position: 13
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

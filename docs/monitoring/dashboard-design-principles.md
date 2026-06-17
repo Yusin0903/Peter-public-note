@@ -1,5 +1,4 @@
 ---
-tags: [monitoring, sre, grafana, dashboard]
 updated: 2026-05-06
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

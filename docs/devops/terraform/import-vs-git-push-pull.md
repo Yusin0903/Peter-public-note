@@ -1,7 +1,5 @@
 ---
 title: "Terraform Import vs Git Pull/Push 的差別"
-tags: [terraform, git, devops, infrastructure]
-created: 2026-06-17
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 

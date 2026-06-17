@@ -1,6 +1,5 @@
 ---
 id: 6-vm-self-monitoring
-title: "VictoriaMetrics 自我監控"
 sidebar_position: 15
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

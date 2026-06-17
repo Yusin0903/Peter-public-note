@@ -101,6 +101,8 @@ const sidebars = {
         'monitoring/yace-deployment-guide',
         'monitoring/Google SRE - Critical User Journey',
         'monitoring/prometheus-default-metrics-reference',
+      
+        'monitoring/prometheus-python-instrumentation',
       ],
     },
     {

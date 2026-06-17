@@ -1,6 +1,5 @@
 ---
 id: 1-monitoring-tech-selection
-title: "集中式多 Region 監控 — 技術選型"
 sidebar_position: 10
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->
