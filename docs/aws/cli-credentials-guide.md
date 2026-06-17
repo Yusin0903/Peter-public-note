@@ -1,6 +1,8 @@
 ---
 sidebar_position: 8
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # AWS CLI 認證完整指南：Access Key、Session Token、Profile
 
 AWS CLI 的認證方式有很多種，這份筆記從最基礎的 Access Key 講起，說明各種認證方式的差異和使用情境。
@@ -23,7 +25,7 @@ AWS CLI 認證方式（優先順序由高到低）：
 Access Key 是 IAM User 的長期憑證，由兩個部分組成：
 
 ```
-AWS_ACCESS_KEY_ID     = AKIAIOSFODNN7EXAMPLE       # 像帳號，可以公開
+AWS_ACCESS_KEY_ID     = AKIA_EXAMPLE_KEY_ID        # 像帳號，可以公開
 AWS_SECRET_ACCESS_KEY = wJalrXUtnFEMI/K7MDENG/...  # 像密碼，絕對不能外洩
 ```
 
@@ -61,7 +63,7 @@ AWS_SESSION_TOKEN     = EXAMPLE    # 額外的臨時 token
 ### 方法一：環境變數（臨時使用）
 
 ```bash
-export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+export AWS_ACCESS_KEY_ID=AKIA_EXAMPLE_KEY_ID
 export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 export AWS_DEFAULT_REGION=us-east-1
 
@@ -76,14 +78,14 @@ export AWS_SESSION_TOKEN=EXAMPLE
 ```bash
 aws configure
 # 互動式輸入：
-# AWS Access Key ID: AKIAIOSFODNN7EXAMPLE
+# AWS Access Key ID: AKIA_EXAMPLE_KEY_ID
 # AWS Secret Access Key: wJalrXUtnFEMI...
 # Default region name: us-east-1
 # Default output format: json
 
 # 結果寫入 ~/.aws/credentials：
 # [default]
-# aws_access_key_id = AKIAIOSFODNN7EXAMPLE
+# aws_access_key_id = AKIA_EXAMPLE_KEY_ID
 # aws_secret_access_key = wJalrXUtnFEMI...
 ```
 
@@ -204,7 +206,7 @@ CLI 會依照這個順序找 credentials，**找到就停止**：
 
 ```bash
 # ❌ 不要把 credentials 直接貼在 chat / PR / commit 裡
-export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE  # 這樣會洩漏
+export AWS_ACCESS_KEY_ID=AKIA_EXAMPLE_KEY_ID  # 這樣會洩漏
 
 # ❌ 不要把 credentials commit 進 git
 git add .aws/credentials  # 千萬不要

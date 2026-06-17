@@ -3,6 +3,7 @@ date: 2026-05-07
 type: guide
 tags: [yace, cloudwatch, prometheus, monitoring, aws]
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # YACE Deployment Guide — Pitfalls & Working Recipe
 

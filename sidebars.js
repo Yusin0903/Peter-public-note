@@ -28,6 +28,14 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Design Pattern',
+      items: [
+        'design-pattern/monorepo',
+        'design-pattern/singleton-pattern',
+      ],
+    },
+    {
+      type: 'category',
       label: 'JavaScript / TypeScript',
       items: [
         'javascript/export-import',
@@ -87,7 +95,6 @@ const sidebars = {
       label: 'Python',
       items: [
         'python/context-manager',
-        'python/singleton-pattern',
       ],
     },
     {

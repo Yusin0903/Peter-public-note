@@ -1,6 +1,8 @@
 ---
 sidebar_position: 10
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # 集中式多 Region 監控 — 技術選型
 
 > **背景：** 最近剛加入新公司，接到的第一個專案就是要將原本沒人在看的監控系統重構，原本的背景是這樣的，目前有約 10 個 AWS Region，每個 region 各跑一套 Prometheus + Grafana，Alert 是做在 Grafana Alert，有 59 個 Alert 但真的有用的很少，目前困境就是 10 個 region 有 10 個 Grafana URL 然後 alert 又太多雜音，所以幾乎沒人在看，據說只有三四個 alert 是會看的 XD 

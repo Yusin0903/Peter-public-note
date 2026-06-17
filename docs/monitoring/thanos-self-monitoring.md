@@ -2,6 +2,7 @@
 title: Thanos 自我監控方式
 sidebar_position: 21
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # Thanos 自我監控方式
 

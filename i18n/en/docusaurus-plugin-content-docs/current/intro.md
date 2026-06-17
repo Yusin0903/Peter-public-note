@@ -17,11 +17,12 @@ These notes aren't meant to be official documentation — they're written so tha
 | Section | Content |
 |---------|---------|
 | **AWS** | DynamoDB, SQS, EC2 vs fully managed services, NAT Gateway vs Transit Gateway |
+| **Design Pattern** | Monorepo, Singleton, design patterns, and repo organization strategies |
 | **JavaScript / TypeScript** | Module system, async/await, connection pool, EventEmitter |
 | **Kubernetes & Docker** | Ingress & Service, Workload types, Storage, CronJob, observability, Docker & NVIDIA GPU |
 | **Monitoring** | Prometheus, VictoriaMetrics, Thanos, AMP centralized monitoring, local docker-compose stack |
 | **Database** | Alembic, SQLAlchemy ORM, SQLite → PostgreSQL migration, PostgreSQL notes |
-| **Python** | Context Manager, Singleton pattern |
+| **Python** | Context Manager, Python syntax and usage notes |
 | **Keycloak** | HttpOnly Cookie, Refresh Token, SSO Session, RBAC design |
 | **Linux** | chmod permissions |
 | **FFmpeg** | Video compression commands and parameters |

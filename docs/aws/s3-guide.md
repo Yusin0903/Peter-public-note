@@ -1,6 +1,7 @@
 ---
 sidebar_position: 12
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # S3（Simple Storage Service）
 

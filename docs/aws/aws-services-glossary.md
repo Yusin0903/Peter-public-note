@@ -1,6 +1,7 @@
 ---
 sidebar_position: 2
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # AWS 基礎服務名詞
 

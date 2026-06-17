@@ -1,6 +1,8 @@
 ---
 sidebar_position: 8
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Knex（JS 版的 SQLAlchemy）& 讀寫分離
 
 ## Knex 基本概念

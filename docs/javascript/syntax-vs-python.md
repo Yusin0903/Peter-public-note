@@ -1,6 +1,8 @@
 ---
 sidebar_position: 3
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # JS 語法對照（vs Python）
 
 快速對照表，讓 Python 開發者一眼看懂 JS/TS 語法。

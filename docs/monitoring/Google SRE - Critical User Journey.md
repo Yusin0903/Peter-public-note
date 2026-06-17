@@ -1,3 +1,8 @@
+---
+title: Google SRE   Critical User Journey
+---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Critical User Journey (CUJ)
 
 > **CUJ = the critical path a user takes to accomplish something important.**

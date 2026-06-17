@@ -1,6 +1,8 @@
 ---
 sidebar_position: 5
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Spread Operator（`...` 展開運算子）
 
 `...` 是 JavaScript/TypeScript 的 spread operator（展開運算子）。

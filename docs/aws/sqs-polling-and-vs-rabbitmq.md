@@ -1,6 +1,7 @@
 ---
 sidebar_position: 5
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # SQS 深度指南：Polling、可靠性保證與 RabbitMQ 比較
 

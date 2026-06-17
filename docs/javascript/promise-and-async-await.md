@@ -1,6 +1,8 @@
 ---
 sidebar_position: 2
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Promise & async/await
 
 ## 為什麼需要 Promise？

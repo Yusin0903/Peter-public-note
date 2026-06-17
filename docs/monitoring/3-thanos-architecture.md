@@ -1,6 +1,8 @@
 ---
 sidebar_position: 12
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Thanos 架構介紹
 
 > Thanos 是 Prometheus 的水平擴展層，不替換 Prometheus，而是在它上面加元件。

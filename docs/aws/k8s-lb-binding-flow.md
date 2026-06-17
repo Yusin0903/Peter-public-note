@@ -1,6 +1,7 @@
 ---
 sidebar_position: 16
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # K8s Service/Ingress 綁定 AWS LB 的流程
 
@@ -87,7 +88,7 @@ LB 重建（Service/Ingress 被 destroy 重建）→ DNS 換 hash，但 **tag �
 ## Route 53 ALIAS 完整接線
 
 ```
-Route 53 record: ti-vmauth-stg.visionone.trendmicro.com
+Route 53 record: vmauth-stg.monitoring.example.com
                               ↓ ALIAS to
               dualstack.<NLB DNS>          ← terraform 從 tag 查到，每次 apply 校準
                               ↓
@@ -101,7 +102,7 @@ Route 53 record: ti-vmauth-stg.visionone.trendmicro.com
 下游（regional Prometheus 之類）只認 hostname。
 
 ```
-remote_write URL: http://ti-vmauth-stg.visionone.trendmicro.com:443/...
+remote_write URL: http://vmauth-stg.monitoring.example.com:443/...
                       ↓ DNS resolve
                       ↓ 永遠拿到當前 NLB IP
 ```
@@ -142,7 +143,7 @@ resource "aws_route53_record" "service_alias" {
 
 # 3. caller (terragrunt.hcl)
 nlb_domains = {
-  "ti-vmauth-stg.visionone.trendmicro.com" = "monitoring/vmauth-nlb"
+  "vmauth-stg.monitoring.example.com" = "monitoring/vmauth-nlb"
 }
 ```
 

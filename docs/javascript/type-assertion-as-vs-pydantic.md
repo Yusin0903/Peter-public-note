@@ -1,6 +1,8 @@
 ---
 sidebar_position: 4
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # TypeScript 型別系統 vs Python 型別系統
 
 ## TypeScript `as` 型別斷言

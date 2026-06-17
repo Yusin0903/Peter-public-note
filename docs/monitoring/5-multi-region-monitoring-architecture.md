@@ -1,6 +1,8 @@
 ---
 sidebar_position: 14
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # 多 Region 監控架構（完整網路細節）
 
 ## TL;DR（30 秒版）

@@ -1,6 +1,7 @@
 ---
 sidebar_position: 7
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # K8s 部署工具比較 & Terraform 定位
 

@@ -1,6 +1,8 @@
 ---
 sidebar_position: 10
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # IRSA：K8s Pod 存取 AWS 資源的正確方式
 
 IRSA（IAM Roles for Service Accounts）是 EKS 上讓 Pod 取得 AWS 資源存取權限的正確方式。

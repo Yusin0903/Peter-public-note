@@ -1,6 +1,8 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Alembic 完整工作指南
 
 ## Alembic 如何追蹤版本

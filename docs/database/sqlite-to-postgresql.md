@@ -1,6 +1,8 @@
 ---
 sidebar_position: 3
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # SQLite 遷移到 PostgreSQL
 
 ## 先問：真的需要 migrate 嗎？

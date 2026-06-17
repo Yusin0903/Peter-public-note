@@ -2,6 +2,7 @@
 title: Grafana Microsoft AAD 無法 rotate token 原因
 sidebar_position: 20
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # Grafana Microsoft AAD 無法 rotate token 原因
 

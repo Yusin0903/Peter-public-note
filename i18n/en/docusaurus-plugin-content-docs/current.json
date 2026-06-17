@@ -7,6 +7,10 @@
     "message": "AWS",
     "description": "The label for category AWS in sidebar tutorialSidebar"
   },
+  "sidebar.tutorialSidebar.category.Design Pattern": {
+    "message": "Design Pattern",
+    "description": "The label for category Design Pattern in sidebar tutorialSidebar"
+  },
   "sidebar.tutorialSidebar.category.JavaScript / TypeScript": {
     "message": "JavaScript / TypeScript",
     "description": "The label for category JavaScript in sidebar tutorialSidebar"

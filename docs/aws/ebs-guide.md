@@ -1,6 +1,7 @@
 ---
 sidebar_position: 13
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # EBS（Elastic Block Store）
 

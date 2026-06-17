@@ -1,6 +1,7 @@
 ---
 sidebar_position: 9
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # K8s 可觀測性：Log、Debug & 服務選型
 

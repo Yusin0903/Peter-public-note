@@ -1,6 +1,8 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Python Context Manager
 
 Context Manager 是 Python 資源管理的核心機制，保證資源（GPU 記憶體、DB 連線、檔案、HTTP session）在進入與離開程式區塊時被正確初始化與釋放，即使中途拋出例外也不例外。

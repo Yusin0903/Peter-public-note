@@ -1,6 +1,7 @@
 ---
 sidebar_position: 18
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # IAM（Identity and Access Management）
 

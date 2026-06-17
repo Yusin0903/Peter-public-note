@@ -1,6 +1,8 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # export / import 模組系統
 
 ## 基本概念：JS 預設 private，Python 預設 public

@@ -1,6 +1,8 @@
 ---
 sidebar_position: 11
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # AWS Certificate Manager (ACM)
 
 ACM 是 AWS 的 **TLS/SSL 憑證管理服務**。幫你申請、管理、部署 HTTPS 用的憑證，而且免費。

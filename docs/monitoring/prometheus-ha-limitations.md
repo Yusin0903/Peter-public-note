@@ -3,6 +3,8 @@ date: 2026-05-18
 type: concept
 tags: [prometheus, thanos, high-availability, observability]
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Prometheus HA Limitations and How Thanos Handles Them
 
 ## Core Problem

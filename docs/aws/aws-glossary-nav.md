@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # AWS 名詞導覽
 

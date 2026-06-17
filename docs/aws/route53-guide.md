@@ -1,6 +1,7 @@
 ---
 sidebar_position: 8
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # Route53 / ACM / K8s Ingress — 完整關係解析
 
@@ -232,13 +233,13 @@ ALB 出示的 cert：ti2-stg.example.com（域名不匹配）
 
 ### 目標
 
-讓公司內部網路可以用 `https://ti-grafana-central-stg.visionone.trendmicro.com` 安全連到 Central Grafana。
+讓內部網路可以用 `https://grafana-central-stg.example.com` 安全連到 Central Grafana。
 
 ### 步驟拆解
 
 | 步驟 | 做什麼 | 在哪裡做 |
 |------|--------|---------|
-| 1 | 申請 ACM cert（域名 `ti-grafana-central-stg.visionone.trendmicro.com`） | ACM Console |
+| 1 | 申請 ACM cert（域名 `grafana-central-stg.example.com`） | ACM Console |
 | 2 | DNS 驗證（加 CNAME 到 Route53） | Route53 Console |
 | 3 | cert ARN 填入 Ingress annotation | `update_env.sh` → `certificate-arn` |
 | 4 | host 填入 Ingress rule | `update_env.sh` → `GRAFANA_CENTRAL_HOSTNAME_PLACEHOLDER` |
@@ -249,12 +250,12 @@ ALB 出示的 cert：ti2-stg.example.com（域名不匹配）
 ### 流量路徑
 
 ```
-瀏覽器: https://ti-grafana-central-stg.visionone.trendmicro.com
+瀏覽器: https://grafana-central-stg.example.com
   │
   │ Route53 Public HZ: A (Alias) → Internal ALB
   ▼
   ALB :443
-  │ ACM cert: ti-grafana-central-stg.visionone.trendmicro.com
+  │ ACM cert: grafana-central-stg.example.com
   │ TLS 握手 → 瀏覽器驗證 → 🔒 安全
   │
   │ Ingress host rule 匹配 → 轉發
@@ -266,12 +267,12 @@ ALB 出示的 cert：ti2-stg.example.com（域名不匹配）
 
 ```bash
 # Terminal
-echo | openssl s_client -connect ti-grafana-central-stg.visionone.trendmicro.com:443 \
-  -servername ti-grafana-central-stg.visionone.trendmicro.com 2>/dev/null | \
+echo | openssl s_client -connect grafana-central-stg.example.com:443 \
+  -servername grafana-central-stg.example.com 2>/dev/null | \
   openssl x509 -noout -subject -issuer -dates
 
 # 預期輸出
-subject= CN = ti-grafana-central-stg.visionone.trendmicro.com
+subject= CN = grafana-central-stg.example.com
 issuer= O = Amazon, CN = Amazon RSA 2048 M03
 notBefore= ...
 notAfter= ...

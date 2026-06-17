@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # K8s 筆記導覽
 

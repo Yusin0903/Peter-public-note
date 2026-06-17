@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # MCP 使用問題記錄
 

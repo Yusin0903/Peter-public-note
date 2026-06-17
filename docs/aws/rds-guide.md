@@ -1,6 +1,7 @@
 ---
 sidebar_position: 16
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # RDS（Relational Database Service）
 

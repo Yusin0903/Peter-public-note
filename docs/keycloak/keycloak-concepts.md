@@ -1,6 +1,8 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Keycloak 核心概念
 
 ## HttpOnly Cookie

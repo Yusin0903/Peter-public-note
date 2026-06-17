@@ -1,6 +1,8 @@
 ---
 sidebar_position: 1
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Linux 權限
 
 ## chmod 數字對應

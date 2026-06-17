@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 ---
-
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # Kubernetes 核心名詞對照表
 

@@ -1,6 +1,8 @@
 ---
 sidebar_position: 9
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Terraform & Terragrunt 名詞對照表
 
 ---

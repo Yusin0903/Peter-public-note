@@ -1,6 +1,8 @@
 ---
 sidebar_position: 2
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # SQLAlchemy 2.0 完整指南
 
 ## 基本查詢

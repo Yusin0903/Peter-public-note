@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # K8s Storage：StorageClass / PVC / PV
 
@@ -371,4 +372,3 @@ kubectl delete pvc xxx     # 才真的砍 PVC（PV 跟 EBS 看 reclaimPolicy）
 ```
 
 → 想完全清乾淨要兩步走，不要只砍 StatefulSet 就以為清完。
-

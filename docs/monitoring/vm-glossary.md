@@ -1,6 +1,7 @@
 ---
 sidebar_position: 17
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # VictoriaMetrics 名詞解釋
 

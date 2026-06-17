@@ -1,6 +1,7 @@
 ---
 sidebar_position: 10
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # EC2（Elastic Compute Cloud）
 

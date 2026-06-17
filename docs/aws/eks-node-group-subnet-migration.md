@@ -1,6 +1,8 @@
 ---
 sidebar_position: 22
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # EKS Node Group 改 Subnet / AZ 的踩坑全紀錄
 
 這篇講「把一個既有的 EKS managed node group 從跨 3 AZ 改成跨 2 AZ」會踩到的坑。雖然案例是改 Thanos 監控的 node group，但這裡面的東西是 **AWS/EKS 通用知識**——之後改任何「既有環境的 node group 拓樸」或「動到 stateful workload 的 AZ」都會遇到。

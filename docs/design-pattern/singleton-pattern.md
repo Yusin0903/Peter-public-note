@@ -1,6 +1,8 @@
 ---
 sidebar_position: 2
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # Singleton vs 多實例 設計模式
 
 ## Singleton（單例）

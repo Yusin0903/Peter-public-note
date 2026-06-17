@@ -1,6 +1,7 @@
 ---
 sidebar_position: 4
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
 
 # SQS 完整指南：Queue 基礎、訊息生命週期與 FIPS
 

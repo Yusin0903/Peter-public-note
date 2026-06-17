@@ -1,6 +1,8 @@
 ---
 sidebar_position: 13
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # VictoriaMetrics 架構介紹
 
 > VictoriaMetrics 是從頭設計的 TSDB，不是 Prometheus 的擴充層。

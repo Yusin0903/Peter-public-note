@@ -1,6 +1,8 @@
 ---
 sidebar_position: 14
 ---
+<!-- generated from ~/peter-llm-wiki; edit source there, not here -->
+
 # ECR（Elastic Container Registry）
 
 ECR 就是 AWS 的私有 Docker hub。
@@ -40,4 +42,3 @@ docker build ──→ docker tag ──→ docker push ──→ ECR Repository
                                                       │
                                              EKS pull image ←──┘
 ```
-
