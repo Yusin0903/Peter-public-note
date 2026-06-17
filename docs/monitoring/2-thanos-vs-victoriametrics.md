@@ -1,4 +1,6 @@
 ---
+id: 2-thanos-vs-victoriametrics
+title: "Thanos vs VictoriaMetrics"
 sidebar_position: 11
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

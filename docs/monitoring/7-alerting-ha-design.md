@@ -1,4 +1,6 @@
 ---
+id: 7-alerting-ha-design
+title: "Alerting HA 設計：vmalert + Alertmanager"
 sidebar_position: 16
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

@@ -1,4 +1,6 @@
 ---
+id: 8-vm-operator-vs-helm
+title: "VictoriaMetrics 部署模式：Operator vs Helm chart"
 sidebar_position: 17
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

@@ -1,4 +1,6 @@
 ---
+id: 3-thanos-architecture
+title: "Thanos 架構介紹"
 sidebar_position: 12
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->
