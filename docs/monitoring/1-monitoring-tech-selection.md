@@ -1,4 +1,5 @@
 ---
+title: "集中式多 Region 監控 — 技術選型"
 id: 1-monitoring-tech-selection
 sidebar_position: 10
 ---

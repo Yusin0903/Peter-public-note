@@ -1,4 +1,5 @@
 ---
+title: "EventEmitter 事件系統"
 sidebar_position: 6
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

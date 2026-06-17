@@ -1,4 +1,5 @@
 ---
+title: "K8s Service/Ingress 綁定 AWS LB 的流程"
 sidebar_position: 16
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

@@ -1,4 +1,5 @@
 ---
+title: "連線池共用 & Release 資源管理"
 sidebar_position: 7
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

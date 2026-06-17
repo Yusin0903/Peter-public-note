@@ -1,4 +1,5 @@
 ---
+title: "VictoriaMetrics 自我監控"
 id: 6-vm-self-monitoring
 sidebar_position: 15
 ---

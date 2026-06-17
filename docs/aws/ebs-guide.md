@@ -1,4 +1,5 @@
 ---
+title: "EBS（Elastic Block Store）"
 sidebar_position: 13
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

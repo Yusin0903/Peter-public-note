@@ -1,4 +1,5 @@
 ---
+title: "Thanos 架構介紹"
 id: 3-thanos-architecture
 sidebar_position: 12
 ---

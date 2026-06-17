@@ -1,4 +1,5 @@
 ---
+title: "Peter's Learning Notes"
 sidebar_position: 1
 slug: /
 ---

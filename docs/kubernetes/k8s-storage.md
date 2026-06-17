@@ -1,4 +1,5 @@
 ---
+title: "K8s Storage：StorageClass / PVC / PV"
 sidebar_position: 6
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

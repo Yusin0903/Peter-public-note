@@ -1,4 +1,5 @@
 ---
+title: "JS 語法對照（vs Python）"
 sidebar_position: 3
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

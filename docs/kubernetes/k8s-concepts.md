@@ -1,4 +1,5 @@
 ---
+title: "Kubernetes 核心概念"
 sidebar_position: 2
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->
