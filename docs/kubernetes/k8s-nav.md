@@ -1,5 +1,4 @@
 ---
-title: "K8s 筆記導覽"
 sidebar_position: 1
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

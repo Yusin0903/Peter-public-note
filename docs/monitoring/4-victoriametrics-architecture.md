@@ -1,5 +1,4 @@
 ---
-title: "VictoriaMetrics 架構介紹"
 id: 4-victoriametrics-architecture
 sidebar_position: 13
 ---

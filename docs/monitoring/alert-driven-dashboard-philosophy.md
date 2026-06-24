@@ -1,5 +1,4 @@
 ---
-title: "Alert-Driven Dashboard Philosophy"
 updated: 2026-05-06
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

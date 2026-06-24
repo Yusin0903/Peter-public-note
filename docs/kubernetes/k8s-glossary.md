@@ -1,5 +1,4 @@
 ---
-title: "Kubernetes 核心名詞對照表"
 sidebar_position: 3
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

@@ -1,5 +1,4 @@
 ---
-title: "Thanos vs VictoriaMetrics"
 id: 2-thanos-vs-victoriametrics
 sidebar_position: 11
 ---

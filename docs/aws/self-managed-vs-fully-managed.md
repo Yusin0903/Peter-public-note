@@ -1,5 +1,4 @@
 ---
-title: "AWS Managed Service 型態"
 sidebar_position: 1
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

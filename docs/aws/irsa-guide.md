@@ -1,5 +1,4 @@
 ---
-title: "IRSA：K8s Pod 存取 AWS 資源的正確方式"
 sidebar_position: 10
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

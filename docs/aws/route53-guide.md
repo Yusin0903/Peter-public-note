@@ -1,5 +1,4 @@
 ---
-title: "Route53 / ACM / K8s Ingress — 完整關係解析"
 sidebar_position: 8
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

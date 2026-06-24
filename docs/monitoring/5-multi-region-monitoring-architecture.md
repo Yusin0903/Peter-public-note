@@ -1,5 +1,4 @@
 ---
-title: "多 Region 監控架構（完整網路細節）"
 id: 5-multi-region-monitoring-architecture
 sidebar_position: 14
 ---

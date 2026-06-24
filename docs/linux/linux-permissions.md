@@ -1,5 +1,4 @@
 ---
-title: "Linux 權限"
 sidebar_position: 1
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

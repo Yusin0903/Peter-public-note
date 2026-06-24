@@ -38,6 +38,8 @@ const sidebars = {
       items: [
         'devops/terraform/glossary',
         'devops/terraform/import-vs-git-push-pull',
+      
+        'devops/terraform/outputs-and-remote-state',
       ],
     },
     {

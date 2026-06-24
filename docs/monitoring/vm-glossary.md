@@ -1,5 +1,4 @@
 ---
-title: "VictoriaMetrics 名詞解釋"
 sidebar_position: 17
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

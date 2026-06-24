@@ -1,5 +1,4 @@
 ---
-title: "Promise & async/await"
 sidebar_position: 2
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

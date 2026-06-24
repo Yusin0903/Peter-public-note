@@ -1,5 +1,4 @@
 ---
-title: "Prometheus Chart 15.5.3 預設 Metrics 參考手冊"
 sidebar_position: 9
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

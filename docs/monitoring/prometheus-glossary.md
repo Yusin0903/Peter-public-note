@@ -1,5 +1,4 @@
 ---
-title: "Prometheus & Monitoring 名詞解釋"
 sidebar_position: 1
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

@@ -1,5 +1,4 @@
 ---
-title: "EC2（Elastic Compute Cloud）"
 sidebar_position: 10
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

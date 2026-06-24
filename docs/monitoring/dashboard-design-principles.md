@@ -1,5 +1,4 @@
 ---
-title: "Dashboard Design Principles for User-Facing Apps"
 updated: 2026-05-06
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

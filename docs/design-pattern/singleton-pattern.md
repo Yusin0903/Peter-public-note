@@ -1,5 +1,4 @@
 ---
-title: "Singleton vs 多實例 設計模式"
 sidebar_position: 2
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

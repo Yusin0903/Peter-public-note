@@ -1,5 +1,4 @@
 ---
-title: "TypeScript 型別系統 vs Python 型別系統"
 sidebar_position: 4
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

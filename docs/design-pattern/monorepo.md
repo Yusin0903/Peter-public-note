@@ -1,5 +1,4 @@
 ---
-title: "Monorepo：不是 Design Pattern，是 Repo 管理策略"
 sidebar_position: 1
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

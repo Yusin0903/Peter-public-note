@@ -1,5 +1,4 @@
 ---
-title: "Prometheus HA Limitations and How Thanos Handles Them"
 date: 2026-05-18
 type: concept
 ---

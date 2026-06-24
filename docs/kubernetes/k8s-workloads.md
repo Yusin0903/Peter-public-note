@@ -1,5 +1,4 @@
 ---
-title: "Workload 類型"
 sidebar_position: 4
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->

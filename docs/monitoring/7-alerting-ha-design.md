@@ -1,5 +1,4 @@
 ---
-title: "Alerting HA 設計：vmalert + Alertmanager"
 id: 7-alerting-ha-design
 sidebar_position: 16
 ---

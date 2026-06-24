@@ -1,5 +1,4 @@
 ---
-title: "PostgreSQL Note"
 sidebar_position: 4
 ---
 <!-- generated from ~/peter-llm-wiki; edit source there, not here -->
